@@ -9,6 +9,7 @@ import { RequestIdInterceptor } from './common/request-id/request-id.interceptor
 import { ApiExceptionFilter } from './common/errors/api-exception.filter.js';
 import fastifyStatic from '@fastify/static';
 import { join } from 'node:path';
+import { existsSync } from 'node:fs';
 
 async function bootstrap() {
   const env = validateOrThrow(ApiEnvSchema, process.env);
@@ -25,14 +26,6 @@ async function bootstrap() {
 
   // Swagger только в dev
   if (env.NODE_ENV !== 'production') {
-    // Register static files for Swagger UI (required for Fastify)
-    const fastifyInstance = app.getHttpAdapter().getInstance();
-    const swaggerUiPath = join(process.cwd(), 'node_modules/swagger-ui-dist');
-    await fastifyInstance.register(fastifyStatic as any, {
-      root: swaggerUiPath,
-      prefix: '/docs/',
-    });
-
     const config = new DocumentBuilder()
       .setTitle('tracked-lms API')
       .setDescription('Telegram Mini App backend')
@@ -40,6 +33,28 @@ async function bootstrap() {
       .build();
 
     const document = SwaggerModule.createDocument(app, config);
+
+    // Register static files for Swagger UI (required for Fastify)
+    // Find swagger-ui-dist in pnpm structure or direct node_modules
+    const fastifyInstance = app.getHttpAdapter().getInstance();
+    let swaggerUiPath = join(process.cwd(), 'node_modules/swagger-ui-dist');
+
+    // Try pnpm structure if direct path doesn't exist
+    if (!existsSync(swaggerUiPath)) {
+      const pnpmPath = join(
+        process.cwd(),
+        'node_modules/.pnpm/swagger-ui-dist@5.31.0/node_modules/swagger-ui-dist',
+      );
+      if (existsSync(pnpmPath)) {
+        swaggerUiPath = pnpmPath;
+      }
+    }
+
+    await fastifyInstance.register(fastifyStatic as any, {
+      root: swaggerUiPath,
+      prefix: '/docs/',
+    });
+
     SwaggerModule.setup('/docs', app, document);
   }
 
