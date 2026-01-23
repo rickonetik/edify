@@ -11,7 +11,10 @@ declare module 'fastify' {
 async function requestIdPlugin(fastify: any) {
   fastify.decorateRequest('traceId', '');
 
-  fastify.addHook('preHandler', async function (request: FastifyRequest, reply: FastifyReply) {
+  fastify.addHook('onRequest', async function (request: FastifyRequest, reply: FastifyReply) {
+    const incomingId = request.headers['x-request-id'];
+    request.traceId = typeof incomingId === 'string' ? incomingId : randomUUID();
+    request._startAt = Date.now();
     reply.header('x-request-id', request.traceId);
   });
 }
