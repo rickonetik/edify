@@ -1,39 +1,52 @@
-## Goal
+## Description
 
-(1–2 sentences)
+<!-- Describe your changes in detail -->
 
-## Scope
+## Definition of Stable (EPIC 1+)
 
-Allowed:
+**REQUIRED**: All three checks must pass before PR is considered ready for review.
 
-- ...
+- [ ] `pnpm verify` PASS
+- [ ] `pnpm test:foundation` PASS
+- [ ] `pnpm audit:architecture` PASS
 
-Not allowed:
+**Note**: If any of these checks fail, the PR is NOT ready for review, even if the feature/UI looks good.
 
-- ...
+## Type of Change
 
-## Changes
+- [ ] Feature (new functionality)
+- [ ] Bug fix
+- [ ] Refactoring (no functional changes)
+- [ ] Documentation
+- [ ] Chore (infrastructure, tooling, etc.)
 
-- [ ] Key change 1
-- [ ] Key change 2
+## Definition of Stable (EPIC 1+)
 
-## DoD Checklist
+**REQUIRED**: All three checks must pass before PR is considered ready for review.
 
-- [ ] `pnpm -w lint` passes (warnings are acceptable, errors are not)
-- [ ] `pnpm -w typecheck` passes
-- [ ] `pnpm -w build` passes
-- [ ] No unrelated refactors/renames
-- [ ] Cursor rules followed (scope + stop condition)
+- [ ] `pnpm verify` PASS
+- [ ] `pnpm test:foundation` PASS
+- [ ] `pnpm audit:architecture` PASS
 
-## Manual QA
+**Note**: If any of these checks fail, the PR is NOT ready for review, even if the feature/UI looks good.
 
-Steps:
+## Testing
 
-1.
-2.
-3.
+<!-- Describe how you tested your changes -->
 
-## Artifacts
+- [ ] Manual testing performed
+- [ ] Automated tests pass (if applicable)
 
-- Logs:
-- Screenshots/Recordings:
+## Checklist
+
+- [ ] Code follows project style guidelines
+- [ ] Self-review completed
+- [ ] Comments added for complex logic
+- [ ] Documentation updated (if needed)
+- [ ] No new warnings or errors introduced
+
+## Related Issues
+
+<!-- Link to related issues, if any -->
+
+Closes #

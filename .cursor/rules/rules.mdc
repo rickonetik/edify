@@ -71,6 +71,38 @@ Never duplicate enums/DTOs/error codes in apps.
 
 **TypeScript Paths Rule**: Do not add tsconfig paths for `@tracked/shared/*` or any deep paths. Only `@tracked/shared` root mapping is allowed. Wildcard paths are forbidden and will break typecheck without build.
 
+## Foundation Freeze (EPIC 1+)
+
+**CRITICAL**: Foundation infrastructure is frozen for EPIC 1 and beyond.
+
+### Frozen Files/Directories (Do NOT modify in EPIC 1)
+
+The following are **FORBIDDEN** to modify during EPIC 1 unless explicitly part of a `chore/foundation-*` Story:
+
+- `tools/verify/*` - Quality gates verification scripts
+- `tools/tests/foundation/*` - Foundation smoke tests
+- `infra/docker-compose.yml` - Infrastructure configuration
+- `tsconfig.base.json` - Base TypeScript configuration
+- `packages/shared/tsconfig.json` - Shared package TypeScript configuration
+- `.github/workflows/ci.yml` - CI/CD workflows (if exists)
+
+### Exception Rule
+
+**ONLY** modifications allowed via explicit Stories with format:
+- Story name: `chore/foundation-*` (e.g., `chore/foundation-update-verify`, `chore/foundation-add-test`)
+- Must have explicit DoD (Definition of Done)
+- Must pass all existing quality gates after changes
+
+### Why This Rule Exists
+
+Cursor and AI assistants tend to "improve" infrastructure when working on features. This rule prevents:
+- Accidental breaking of quality gates
+- Unintended changes to test infrastructure
+- Drift in TypeScript configuration
+- CI/CD pipeline modifications without explicit approval
+
+**If you need to change foundation infrastructure, create a separate Story first.**
+
 ## Architecture Rules (EPIC 1+)
 
 ### No Premature Abstraction
