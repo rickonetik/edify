@@ -1,2 +1,2 @@
-export * from './schemas';
-export * from './validate';
+export * from './schemas.js';
+export * from './validate.js';
