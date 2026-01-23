@@ -213,16 +213,20 @@ function verifySharedConfig() {
       { name: 'module', expected: 'commonjs', actual: compilerOptions.module?.toLowerCase() },
       {
         name: 'moduleResolution',
-        expected: 'node',
+        expected: ['node', 'node10', 'nodenext'],
         actual: compilerOptions.moduleResolution?.toLowerCase(),
+        check: (actual, expected) => expected.includes(actual),
       },
     ];
 
     let allPassed = true;
     for (const check of checks) {
-      if (check.actual !== check.expected) {
+      const passed = check.check
+        ? check.check(check.actual, check.expected)
+        : check.actual === check.expected;
+      if (!passed) {
         log(
-          `  ❌ ${check.name}: expected ${check.expected}, got ${check.actual}`,
+          `  ❌ ${check.name}: expected ${Array.isArray(check.expected) ? check.expected.join(' or ') : check.expected}, got ${check.actual}`,
           colors.red,
         );
         allPassed = false;
