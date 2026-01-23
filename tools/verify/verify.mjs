@@ -209,12 +209,12 @@ function verifySharedConfig() {
 
     const checks = [
       { name: 'strict', expected: true, actual: compilerOptions.strict },
-      { name: 'target', expected: 'ES2022', actual: compilerOptions.target },
-      { name: 'module', expected: 'CommonJS', actual: compilerOptions.module },
+      { name: 'target', expected: 'es2022', actual: compilerOptions.target?.toLowerCase() },
+      { name: 'module', expected: 'commonjs', actual: compilerOptions.module?.toLowerCase() },
       {
         name: 'moduleResolution',
-        expected: 'Node',
-        actual: compilerOptions.moduleResolution,
+        expected: 'node',
+        actual: compilerOptions.moduleResolution?.toLowerCase(),
       },
     ];
 
