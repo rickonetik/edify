@@ -9,6 +9,11 @@ import { RequestIdInterceptor } from './common/request-id/request-id.interceptor
 import { ApiExceptionFilter } from './common/errors/api-exception.filter.js';
 import fastifyStatic from '@fastify/static';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { dirname } from 'node:path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 async function bootstrap() {
   const env = validateOrThrow(ApiEnvSchema, process.env);
@@ -26,7 +31,8 @@ async function bootstrap() {
   // Swagger только в dev
   if (env.NODE_ENV !== 'production') {
     // Register static files for Swagger UI (required for Fastify)
-    const swaggerUiPath = join(__dirname, '../node_modules/swagger-ui-dist');
+    // swagger-ui-dist is in root node_modules (pnpm hoisting)
+    const swaggerUiPath = join(process.cwd(), 'node_modules/swagger-ui-dist');
     await app.register(fastifyStatic, {
       root: swaggerUiPath,
       prefix: '/docs/',
