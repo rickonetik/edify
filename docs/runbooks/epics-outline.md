@@ -134,3 +134,40 @@
 - Ветка: `chore/monorepo-scaffold`
 - Коммит: `f00bf3d chore: GitHub CI + PR template (Story 0.3)`
 - История: три коммита (0.1 → 0.2 → 0.3)
+
+### 0.4 Docker Compose (Postgres/Redis/MinIO) + runbook
+
+**Status:** ✅ Completed  
+**PR:** chore/infra-compose
+
+**Выполнено:**
+
+- Создан `.env.example` в корне:
+  - Переменные для Postgres (DB, USER, PASSWORD, PORT)
+  - Переменные для Redis (PORT)
+  - Переменные для MinIO (ROOT_USER, ROOT_PASSWORD, PORT, CONSOLE_PORT, BUCKET)
+  - Placeholder переменные для будущих apps (API_PORT, WEBAPP_PORT, BOT_LOG_LEVEL)
+- Создан `infra/docker-compose.yml`:
+  - Service: postgres (postgres:16-alpine) с healthcheck
+  - Service: redis (redis:7-alpine) с healthcheck и AOF
+  - Service: minio (minio/minio:latest) с healthcheck и console
+  - Service: minio-init (minio/mc:latest) для создания bucket
+  - Volumes: pg_data, redis_data, minio_data
+  - Restart policy: unless-stopped
+- Создан runbook: `docs/runbooks/local-infra.md`:
+  - Prerequisites (Docker Desktop)
+  - Setup инструкции
+  - Verification для всех сервисов
+  - Stop/clean команды
+  - Troubleshooting
+
+**Проверено:**
+
+- ✅ docker-compose.yml синтаксически корректен
+- ✅ Все сервисы настроены с healthchecks
+- ✅ Runbook содержит все необходимые команды
+
+**Git:**
+
+- Ветка: `chore/monorepo-scaffold`
+- Коммит: готов к созданию (вместе с обновлением epics-outline.md)
