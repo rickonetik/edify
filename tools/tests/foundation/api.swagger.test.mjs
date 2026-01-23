@@ -104,10 +104,15 @@ test('GET /docs returns 200 in development mode', async () => {
   await startApi({ NODE_ENV: 'development' });
   
   try {
-    const response = await fetch(`${API_URL}/docs`);
+    // Try /docs first, if 404 try /docs/ (some Swagger setups use trailing slash)
+    let response = await fetch(`${API_URL}/docs`);
+    if (response.status === 404) {
+      response = await fetch(`${API_URL}/docs/`);
+    }
     
     if (response.status !== 200) {
-      throw new Error(`Expected 200, got ${response.status}`);
+      const body = await response.text();
+      throw new Error(`Expected 200, got ${response.status}. Response: ${body.substring(0, 200)}`);
     }
 
     const contentType = response.headers.get('content-type');

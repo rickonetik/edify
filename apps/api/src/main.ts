@@ -7,6 +7,8 @@ import { AppModule } from './app.module.js';
 import { createPinoLogger } from './common/logging/pino.js';
 import { RequestIdInterceptor } from './common/request-id/request-id.interceptor.js';
 import { ApiExceptionFilter } from './common/errors/api-exception.filter.js';
+import fastifyStatic from '@fastify/static';
+import { join } from 'node:path';
 
 async function bootstrap() {
   const env = validateOrThrow(ApiEnvSchema, process.env);
@@ -23,6 +25,14 @@ async function bootstrap() {
 
   // Swagger только в dev
   if (env.NODE_ENV !== 'production') {
+    // Register static files for Swagger UI (required for Fastify)
+    const fastifyInstance = app.getHttpAdapter().getInstance();
+    const swaggerUiPath = join(process.cwd(), 'node_modules/swagger-ui-dist');
+    await fastifyInstance.register(fastifyStatic as any, {
+      root: swaggerUiPath,
+      prefix: '/docs/',
+    });
+
     const config = new DocumentBuilder()
       .setTitle('tracked-lms API')
       .setDescription('Telegram Mini App backend')
@@ -30,11 +40,7 @@ async function bootstrap() {
       .build();
 
     const document = SwaggerModule.createDocument(app, config);
-    // SwaggerModule.setup with Fastify requires customOptions for proper static file serving
-    SwaggerModule.setup('/docs', app, document, {
-      customSiteTitle: 'tracked-lms API Docs',
-      customCss: '.swagger-ui .topbar { display: none }',
-    });
+    SwaggerModule.setup('/docs', app, document);
   }
 
   await app.listen({ port: env.API_PORT, host: '0.0.0.0' });
