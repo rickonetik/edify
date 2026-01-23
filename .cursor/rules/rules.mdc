@@ -107,6 +107,29 @@ Never duplicate enums/DTOs/error codes in apps.
 - One Story = one PR.
 - Commit messages should be conventional style when possible.
 
+## Quality Gates Enforcement
+
+### Before Starting Any New Story
+
+1. **Run `pnpm verify`**
+   - If red → fix first, stop
+   - Do not proceed with new Story if verify fails
+
+2. **Never modify unrelated files to make verify pass**
+   - Fix the actual issue, not symptoms
+   - Maintain scope discipline
+
+### Quality Gates Check
+
+The `pnpm verify` command runs:
+- Workspace integrity check
+- Deep imports check (no `@tracked/shared/src/*`)
+- Lint (errors block, warnings OK)
+- Typecheck
+- Build
+
+See [docs/runbooks/quality-gates.md](../docs/runbooks/quality-gates.md) for details.
+
 ## Stop Condition
 After completing the current Story DoD and Manual QA, STOP.
 Do not start the next Story.

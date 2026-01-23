@@ -6,7 +6,17 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import eslintConfigPrettier from 'eslint-config-prettier';
 
 export default [
-  { ignores: ['**/dist/**', '**/build/**', '**/.turbo/**', '**/node_modules/**', '**/*.cjs', '**/*.config.cjs'] },
+      {
+        ignores: [
+          '**/dist/**',
+          '**/build/**',
+          '**/.turbo/**',
+          '**/node_modules/**',
+          '**/*.cjs',
+          '**/*.config.cjs',
+          'tools/verify/**',
+        ],
+      },
 
   js.configs.recommended,
   ...tseslint.configs.recommended,

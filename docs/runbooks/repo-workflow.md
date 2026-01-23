@@ -23,14 +23,22 @@ This shows all packages: @tracked/api, @tracked/bot, @tracked/shared, @tracked/w
 Перед созданием PR выполнить:
 
 ```bash
-pnpm -w lint
-pnpm -w typecheck
-pnpm -w build
+pnpm verify
 ```
 
-Все команды должны проходить без ошибок.
+Команда `pnpm verify` выполняет все проверки:
+
+- Workspace integrity
+- Deep imports check
+- Lint (warnings OK, errors block)
+- Typecheck
+- Build
+
+**PR is not allowed if verify fails.**
 
 **Note**: `pnpm -w lint` warnings are acceptable; only errors block the PR.
+
+See [Quality Gates](./quality-gates.md) for detailed information.
 
 ### Deep Imports Check
 
