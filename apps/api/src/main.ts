@@ -23,6 +23,12 @@ async function bootstrap() {
 
   // Swagger только в dev
   if (env.NODE_ENV !== 'production') {
+    // Register static files for Swagger UI (required for Fastify)
+    await app.register(fastifyStatic, {
+      root: join(__dirname, '../../node_modules/swagger-ui-dist'),
+      prefix: '/docs/',
+    });
+
     const config = new DocumentBuilder()
       .setTitle('tracked-lms API')
       .setDescription('Telegram Mini App backend')

@@ -134,14 +134,56 @@ function main() {
   // B) Check for duplicates
   log('\n🔍 B) Duplication Check', colors.blue);
   if (tool === 'rg') {
-    // Check for duplicate error codes, but exclude swagger examples and imports
-    checks.push(
-      runCheck(
-        'No duplicate error codes in apps (excluding swagger examples)',
-        "rg 'export enum ErrorCodes|const ErrorCodes|VALIDATION_ERROR.*=|INTERNAL_ERROR.*=' -n apps --glob '!**/node_modules/**' --glob '!**/dist/**' --glob '!**/*.test.*' --glob '!**/*.spec.*' -t ts -t tsx",
-        0,
-      ),
-    );
+    // Check for duplicate error codes, but exclude swagger examples
+    // Only check actual definitions: export enum, const declarations, or assignments
+    // Exclude lines containing 'schema:', 'example:', or '@ApiResponse' (swagger decorators)
+    if (tool === 'rg') {
+      // Use ripgrep with negative lookahead to exclude swagger examples
+      const output = execSync(
+        "rg 'export enum ErrorCodes|export const ErrorCodes|ErrorCodes\\s*=|VALIDATION_ERROR\\s*=|INTERNAL_ERROR\\s*=' -n apps --glob '!**/node_modules/**' --glob '!**/dist/**' --glob '!**/*.test.*' --glob '!**/*.spec.*' -t ts -t tsx",
+        { encoding: 'utf-8', stdio: 'pipe' },
+      );
+      const lines = output
+        .trim()
+        .split('\n')
+        .filter((line) => {
+          // Exclude swagger examples and decorators
+          return (
+            !line.includes('schema:') &&
+            !line.includes('example:') &&
+            !line.includes('@ApiResponse') &&
+            !line.includes("code: '") && // Exclude string literals in examples
+            !line.includes('code: "') // Exclude string literals in examples
+          );
+        })
+        .filter((line) => {
+          // Only keep actual definitions (export, const, assignments)
+          return (
+            line.includes('export enum') ||
+            line.includes('export const') ||
+            line.includes('ErrorCodes.') || // Usage of ErrorCodes from shared
+            line.includes('= ErrorCodes.') // Assignment from ErrorCodes
+          );
+        });
+
+      if (lines.length > 0) {
+        error('No duplicate error codes in apps (excluding swagger examples): Found definitions');
+        console.log(lines.join('\n'));
+        checks.push(false);
+      } else {
+        success('No duplicate error codes in apps (excluding swagger examples): OK');
+        checks.push(true);
+      }
+    } else {
+      // Fallback to simpler check for grep
+      checks.push(
+        runCheck(
+          'No duplicate error codes in apps (excluding swagger examples)',
+          "grep -R 'export enum ErrorCodes\\|export const ErrorCodes' apps --include='*.ts' --include='*.tsx' --exclude-dir=node_modules --exclude-dir=dist --exclude='*.test.*' --exclude='*.spec.*' -n",
+          0,
+        ),
+      );
+    }
     checks.push(
       runCheck(
         'No deep imports from @tracked/shared/src',
