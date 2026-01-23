@@ -32,6 +32,16 @@ pnpm -w build
 
 **Note**: `pnpm -w lint` warnings are acceptable; only errors block the PR.
 
+### Deep Imports Check
+
+Проверка отсутствия deep imports в `@tracked/shared`:
+
+```bash
+rg "@tracked/shared/src" -n
+```
+
+Должно вернуть пустой результат (0 matches). Deep imports запрещены, используйте только `@tracked/shared`.
+
 ## Branch Naming
 
 Формат: `type/scope-short`
