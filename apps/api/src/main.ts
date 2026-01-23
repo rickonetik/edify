@@ -66,7 +66,8 @@ async function bootstrap() {
       }
     }
 
-    // Only register static files if path exists
+    // Register static files for Swagger UI (required for Fastify)
+    // SwaggerModule.setup with Fastify needs static files registered first
     if (swaggerUiPath && existsSync(swaggerUiPath)) {
       await fastifyInstance.register(fastifyStatic as any, {
         root: swaggerUiPath,
@@ -74,7 +75,10 @@ async function bootstrap() {
       });
     }
 
-    SwaggerModule.setup('/docs', app, document);
+    // Setup Swagger after static files are registered
+    SwaggerModule.setup('/docs', app, document, {
+      customSiteTitle: 'tracked-lms API Docs',
+    });
   }
 
   await app.listen({ port: env.API_PORT, host: '0.0.0.0' });
