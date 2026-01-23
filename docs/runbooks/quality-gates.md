@@ -52,9 +52,11 @@ pnpm verify:workspace
 # Check deep imports only
 pnpm verify:deep-imports
 
-# Infra check (manual instruction)
+# Infra helper (prints manual check instructions)
 pnpm verify:infra
 ```
+
+**Note**: `verify:infra` is a helper command that prints instructions for manual infra checks. It does not automatically verify infrastructure status. See "Manual Gates" section below.
 
 ## Quality Gates Table
 
@@ -70,12 +72,16 @@ pnpm verify:infra
 
 ### Manual Gates (run periodically)
 
+These gates require manual verification and are not automated by `pnpm verify`.
+
 | Gate           | How to Check                                     | Frequency                       |
 | -------------- | ------------------------------------------------ | ------------------------------- |
 | **API Health** | `curl http://localhost:3001/health`              | Before PR, after conflicts      |
 | **Infra Up**   | `docker compose -f infra/docker-compose.yml ps`  | Daily, before integration tests |
 | **Bot Start**  | `BOT_TOKEN=... pnpm --filter @tracked/bot start` | After bot changes               |
 | **ngrok Loop** | Follow [telegram-dev.md](./telegram-dev.md)      | When testing Mini App           |
+
+**Note**: The `pnpm verify:infra` command is a helper that prints instructions for infra checks. It does not perform automatic verification. Infra gate is **manual only**.
 
 ## Failure Handling
 
@@ -158,6 +164,14 @@ GitHub Actions CI runs equivalent checks:
 - `pnpm -w build`
 
 PRs with failing CI cannot be merged.
+
+## Implementation Notes
+
+### Verify Script (`tools/verify/verify.mjs`)
+
+The verification script itself is excluded from ESLint checks to minimize friction during Foundation stage. The script is validated through execution only (via `pnpm verify`), not through static analysis.
+
+**Future improvement**: Re-enable ESLint for `tools/verify` once the ESLint configuration stabilizes.
 
 ## Related Documentation
 
