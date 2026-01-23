@@ -137,6 +137,50 @@ function verifyDeepImports() {
   }
 }
 
+function verifyNoWildcardPaths() {
+  log('\n🚫 Checking for wildcard paths in tsconfig...', colors.blue);
+
+  const pattern = '@tracked/shared/\\*';
+  let command;
+  let tool;
+
+  if (checkCommandExists('rg')) {
+    tool = 'ripgrep (rg)';
+    command = `rg "${pattern}" -n --glob '**/tsconfig*.json' --glob '!**/node_modules/**' --glob '!**/dist/**'`;
+  } else if (checkCommandExists('grep')) {
+    tool = 'grep';
+    command = `grep -R "${pattern}" . --include='tsconfig*.json' --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=.turbo --exclude-dir=.git -n`;
+  } else {
+    error('Neither ripgrep (rg) nor grep found. Please install ripgrep: brew install ripgrep');
+    process.exit(1);
+  }
+
+  try {
+    info(`Using ${tool} to check for wildcard paths in tsconfig files`);
+    const output = execSync(command, { encoding: 'utf-8', stdio: 'pipe' });
+    const matches = output.trim();
+
+    if (matches) {
+      error('Wildcard paths found in tsconfig:');
+      console.log(matches);
+      error('\nWildcard paths (@tracked/shared/*) are forbidden. Only root mapping (@tracked/shared) is allowed.');
+      return false;
+    }
+
+    success('No wildcard paths found');
+    return true;
+  } catch (err) {
+    // grep/rg exit code 1 means "no matches" - that's success
+    if (err.status === 1) {
+      success('No wildcard paths found');
+      return true;
+    }
+    // Other errors are real problems
+    error(`Failed to check wildcard paths: ${err.message}`);
+    return false;
+  }
+}
+
 function verifyLint() {
   log('\n🔧 Running lint...', colors.blue);
   return runCommand('pnpm -w lint', 'Lint');
