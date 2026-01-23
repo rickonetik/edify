@@ -196,6 +196,59 @@ function verifyBuild() {
   return runCommand('pnpm -w build', 'Build');
 }
 
+function verifySharedConfig() {
+  log('\n🔧 Checking shared package configuration...', colors.blue);
+  try {
+    const config = execSync('tsc -p packages/shared/tsconfig.json --showConfig', {
+      encoding: 'utf-8',
+      cwd: process.cwd(),
+    });
+    const configObj = JSON.parse(config);
+    const compilerOptions = configObj.compilerOptions || {};
+
+    const checks = [
+      { name: 'strict', expected: true, actual: compilerOptions.strict },
+      { name: 'target', expected: 'ES2022', actual: compilerOptions.target },
+      { name: 'module', expected: 'CommonJS', actual: compilerOptions.module },
+      {
+        name: 'moduleResolution',
+        expected: 'Node',
+        actual: compilerOptions.moduleResolution,
+      },
+    ];
+
+    let allPassed = true;
+    for (const check of checks) {
+      if (check.actual !== check.expected) {
+        log(
+          `  ❌ ${check.name}: expected ${check.expected}, got ${check.actual}`,
+          colors.red,
+        );
+        allPassed = false;
+      } else {
+        log(`  ✅ ${check.name}: ${check.actual}`, colors.green);
+      }
+    }
+
+    // Check that shared doesn't use paths from base config
+    if (compilerOptions.paths && Object.keys(compilerOptions.paths).length > 0) {
+      log(
+        `  ⚠️  Warning: shared tsconfig has paths defined (should not extend base config)`,
+        colors.yellow,
+      );
+    }
+
+    if (!allPassed) {
+      throw new Error('Shared package configuration mismatch');
+    }
+    success('Shared config check passed');
+    return true;
+  } catch (err) {
+    error(`Failed: ${err.message}`);
+    return false;
+  }
+}
+
 function verifyNoDuplicateErrorCodes() {
   log('\n🚫 Checking for duplicate error codes in apps...', colors.blue);
 
@@ -348,6 +401,7 @@ function main() {
     { name: 'Wildcard Paths', fn: verifyNoWildcardPaths },
     { name: 'Duplicate Error Codes', fn: verifyNoDuplicateErrorCodes },
     { name: 'Manual Error Format', fn: verifyNoManualErrorFormat },
+    { name: 'Shared Config', fn: verifySharedConfig },
     { name: 'Lint', fn: verifyLint },
     { name: 'Typecheck', fn: verifyTypecheck },
     { name: 'Build', fn: verifyBuild },
