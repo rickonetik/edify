@@ -30,7 +30,11 @@ async function bootstrap() {
       .build();
 
     const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('/docs', app, document);
+    // SwaggerModule.setup with Fastify requires customOptions for proper static file serving
+    SwaggerModule.setup('/docs', app, document, {
+      customSiteTitle: 'tracked-lms API Docs',
+      customCss: '.swagger-ui .topbar { display: none }',
+    });
   }
 
   await app.listen({ port: env.API_PORT, host: '0.0.0.0' });

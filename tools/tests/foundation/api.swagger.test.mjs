@@ -54,10 +54,16 @@ async function startApi(env = {}) {
       reject(new Error(`API startup timeout after ${STARTUP_TIMEOUT}ms`));
     }, STARTUP_TIMEOUT);
 
+    // Explicitly set NODE_ENV to ensure deterministic behavior
+    const processEnv = { ...process.env, ...env, API_PORT: String(API_PORT) };
+    if (!processEnv.NODE_ENV) {
+      processEnv.NODE_ENV = 'development'; // Default to development for tests
+    }
+
     apiProcess = spawn('pnpm', ['--filter', '@tracked/api', 'start'], {
       cwd,
       stdio: 'pipe',
-      env: { ...process.env, ...env, API_PORT: String(API_PORT) },
+      env: processEnv,
     });
 
     let stderr = '';
