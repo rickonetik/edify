@@ -9,7 +9,8 @@ import { RequestIdInterceptor } from './common/request-id/request-id.interceptor
 import { ApiExceptionFilter } from './common/errors/api-exception.filter.js';
 import fastifyStatic from '@fastify/static';
 import { join } from 'node:path';
-import { createRequire } from 'module';
+import { existsSync } from 'node:fs';
+import { readdirSync } from 'node:fs';
 
 async function bootstrap() {
   const env = validateOrThrow(ApiEnvSchema, process.env);
@@ -31,17 +32,44 @@ async function bootstrap() {
     const fastifyInstance = app.getHttpAdapter().getInstance();
     const require = createRequire(import.meta.url);
 
-    try {
-      // Resolve swagger-ui-dist package
-      const swaggerUiDistPath = require.resolve('swagger-ui-dist');
-      const swaggerUiPath = join(swaggerUiDistPath, '..');
+    // Find swagger-ui-dist in pnpm structure
+    let swaggerUiPath: string | undefined;
 
+    // Try pnpm structure first (most common with pnpm)
+    const pnpmPath = join(
+      process.cwd(),
+      'node_modules/.pnpm/swagger-ui-dist@5.31.0/node_modules/swagger-ui-dist',
+    );
+    if (existsSync(pnpmPath)) {
+      swaggerUiPath = pnpmPath;
+    } else {
+      // Fallback: try to find any swagger-ui-dist in .pnpm
+      const pnpmDir = join(process.cwd(), 'node_modules/.pnpm');
+      if (existsSync(pnpmDir)) {
+        const dirs = readdirSync(pnpmDir);
+        const swaggerDir = dirs.find((d: string) => d.startsWith('swagger-ui-dist@'));
+        if (swaggerDir) {
+          const foundPath = join(pnpmDir, swaggerDir, 'node_modules/swagger-ui-dist');
+          if (existsSync(foundPath)) {
+            swaggerUiPath = foundPath;
+          }
+        }
+      }
+      // Last fallback: direct node_modules
+      if (!swaggerUiPath) {
+        swaggerUiPath = join(process.cwd(), 'node_modules/swagger-ui-dist');
+      }
+    }
+
+    // Register static files if path exists
+    if (swaggerUiPath && existsSync(swaggerUiPath)) {
       await fastifyInstance.register(fastifyStatic as any, {
         root: swaggerUiPath,
         prefix: '/docs/',
       });
-    } catch (err) {
-      logger.warn({ err }, 'Failed to register Swagger UI static files');
+      logger.info('Swagger UI static files registered successfully');
+    } else {
+      logger.warn('Swagger UI static files path not found');
     }
 
     const config = new DocumentBuilder()
