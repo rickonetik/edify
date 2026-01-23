@@ -38,6 +38,12 @@ async function waitForPort(port, timeout = PORT_TIMEOUT) {
 
 async function buildApi() {
   try {
+    // Build shared first (required dependency)
+    execSync('pnpm --filter @tracked/shared build', {
+      stdio: 'pipe',
+      cwd: process.cwd(),
+    });
+    // Then build API
     execSync('pnpm --filter @tracked/api build', {
       stdio: 'pipe',
       cwd: process.cwd(),
