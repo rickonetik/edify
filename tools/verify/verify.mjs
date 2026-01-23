@@ -284,13 +284,29 @@ function verifyNoManualErrorFormat() {
   let command;
   let tool;
 
+  // Whitelist: only apps/api/src/common/errors/** is allowed to format errors
+  // Exclude: swagger docs, mocks, tests, error filter itself
+  const excludePatterns = [
+    '**/node_modules/**',
+    '**/dist/**',
+    '**/errors/**', // Error filter is allowed
+    '**/*.test.*',
+    '**/*.spec.*',
+    '**/__mocks__/**',
+    '**/__tests__/**',
+  ];
+
   if (checkCommandExists('rg')) {
     tool = 'ripgrep (rg)';
-    // Search in API source, exclude error filter (it's allowed to format errors)
-    command = `rg 'statusCode"\\s*:' -n apps/api/src --glob '!**/node_modules/**' --glob '!**/dist/**' --glob '!**/errors/**' -t ts`;
+    const excludeGlobs = excludePatterns.map((p) => `--glob '!${p}'`).join(' ');
+    command = `rg 'statusCode"\\s*:' -n apps/api/src ${excludeGlobs} -t ts`;
   } else if (checkCommandExists('grep')) {
     tool = 'grep';
-    command = `grep -R 'statusCode"\\s*:' apps/api/src --include='*.ts' --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=errors -n`;
+    const excludeDirs = ['node_modules', 'dist', 'errors', '__mocks__', '__tests__'];
+    const excludeFiles = ['*.test.*', '*.spec.*'];
+    const excludeDirsStr = excludeDirs.map((d) => `--exclude-dir=${d}`).join(' ');
+    const excludeFilesStr = excludeFiles.map((f) => `--exclude=${f}`).join(' ');
+    command = `grep -R 'statusCode"\\s*:' apps/api/src --include='*.ts' ${excludeDirsStr} ${excludeFilesStr} -n`;
   } else {
     error('Neither ripgrep (rg) nor grep found. Please install ripgrep: brew install ripgrep');
     process.exit(1);

@@ -26,7 +26,9 @@ export class HealthController {
     };
   }
 
-  // Тестовые endpoints для проверки формата ошибок (только для dev)
+  // Test endpoints for error format verification (dev-only, for smoke tests)
+  // These endpoints are intentionally exposed in development to allow foundation smoke tests
+  // to verify error format consistency. They should NOT be used in production.
   @Get('health/error')
   @ApiResponse({
     status: 500,
@@ -44,6 +46,8 @@ export class HealthController {
     throw new Error('boom');
   }
 
+  // Test endpoint for validation error format (dev-only, for smoke tests)
+  // See comment above for health/error endpoint
   @Get('health/400')
   @ApiResponse({
     status: 400,

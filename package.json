@@ -17,7 +17,8 @@
     "verify:deep-imports": "node tools/verify/verify.mjs --deep-imports-only",
     "verify:workspace": "pnpm -r list --depth 0",
     "verify:infra": "echo 'Infra check: run docker compose -f infra/docker-compose.yml ps'",
-    "test:foundation": "node --test tools/tests/foundation/*.test.mjs"
+    "test:foundation": "node --test tools/tests/foundation/*.test.mjs",
+    "audit:architecture": "node tools/verify/architecture-freeze-audit.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
