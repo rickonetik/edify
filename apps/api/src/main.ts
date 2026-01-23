@@ -38,7 +38,7 @@ async function bootstrap() {
         prefix: '/docs/',
       });
     } catch (err) {
-      logger.warn('Failed to register Swagger UI static files:', err);
+      logger.warn({ err }, 'Failed to register Swagger UI static files');
     }
 
     const config = new DocumentBuilder()
