@@ -43,6 +43,8 @@ Runs all automated quality gates:
 4. **Lint** - Runs ESLint across the repository
 5. **Typecheck** - Validates TypeScript types (requires dependencies to be built)
 
+**Note**: Typecheck currently relies on build artifacts (temporary compromise for Foundation stage). Preferred future: TS project references / path mapping to source for typecheck without build.
+
 ### Individual Checks
 
 ```bash
@@ -172,6 +174,15 @@ PRs with failing CI cannot be merged.
 The verification script itself is excluded from ESLint checks to minimize friction during Foundation stage. The script is validated through execution only (via `pnpm verify`), not through static analysis.
 
 **Future improvement**: Re-enable ESLint for `tools/verify` once the ESLint configuration stabilizes.
+
+## Before Starting EPIC 1
+
+**Mandatory checks on `main` branch:**
+
+1. `pnpm verify` → ✅ green
+2. GitHub Actions → ✅ green (last run on main)
+
+If both are green, you can proceed with Story 1.1.
 
 ## Related Documentation
 
