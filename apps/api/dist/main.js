@@ -5,6 +5,7 @@ import { ApiEnvSchema, validateOrThrow } from '@tracked/shared';
 import { AppModule } from './app.module.js';
 import { createPinoLogger } from './common/logging/pino.js';
 import { RequestIdInterceptor } from './common/request-id/request-id.interceptor.js';
+import { ApiExceptionFilter } from './common/errors/api-exception.filter.js';
 async function bootstrap() {
     const env = validateOrThrow(ApiEnvSchema, process.env);
     const logger = createPinoLogger(env.NODE_ENV);
@@ -13,6 +14,7 @@ async function bootstrap() {
         bufferLogs: false,
     });
     app.useGlobalInterceptors(new RequestIdInterceptor());
+    app.useGlobalFilters(new ApiExceptionFilter());
     await app.listen({ port: env.API_PORT, host: '0.0.0.0' });
 }
 bootstrap().catch((err) => {

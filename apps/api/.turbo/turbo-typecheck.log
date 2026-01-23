@@ -1,4 +1,4 @@
 
-> @tracked/api@ typecheck /Users/user/Project/edify_main/apps/api
+> @tracked/api@0.0.0 typecheck /Users/user/Project/edify_main/apps/api
 > tsc -p tsconfig.json --noEmit
 
