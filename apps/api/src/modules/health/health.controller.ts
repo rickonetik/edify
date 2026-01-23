@@ -23,8 +23,8 @@ export class HealthController {
   @Get('health/400')
   get400() {
     throw new BadRequestException({
-      message: 'Validation failed',
-      errors: ['field1 is required', 'field2 must be a string'],
+      message: ['field1 is required', 'field2 must be a string'],
+      error: 'Bad Request',
     });
   }
 }

@@ -26,11 +26,20 @@ export class ApiExceptionFilter implements ExceptionFilter {
         message = resp.message || exception.message || 'Bad Request';
 
         // Для 400 (валидация) прокидываем details, если есть
-        if (
-          statusCode === HttpStatus.BAD_REQUEST &&
-          (Array.isArray(resp.message) || resp.details)
-        ) {
-          details = resp.message || resp.details;
+        if (statusCode === HttpStatus.BAD_REQUEST) {
+          if (Array.isArray(resp.message)) {
+            details = resp.message;
+          } else if (resp.errors) {
+            details = resp.errors;
+          } else if (resp.details) {
+            details = resp.details;
+          } else {
+            // Если весь response - это объект с данными (не только message)
+            const { message: _, error: __, ...rest } = resp;
+            if (Object.keys(rest).length > 0) {
+              details = rest;
+            }
+          }
         }
       } else {
         message = exception.message || 'Bad Request';
