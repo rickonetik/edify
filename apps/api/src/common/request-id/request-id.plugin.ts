@@ -15,29 +15,40 @@ export async function requestIdPlugin(fastify: any) {
     req.traceId = traceId;
     req._startAt = Date.now();
 
+    console.log('[DEBUG] onRequest: traceId =', traceId);
     done();
   });
 
   // ГАРАНТИЯ: header ставится прямо перед отправкой
   fastify.addHook('onSend', (req: any, reply: any, payload: any, done: any) => {
-    reply.header('x-request-id', req.traceId);
+    if (req.traceId) {
+      reply.header('x-request-id', req.traceId);
+      console.log('[DEBUG] onSend: setting x-request-id =', req.traceId);
+    }
     done(null, payload);
   });
 
   fastify.addHook('onResponse', (req: any, reply: any, done: any) => {
     const durationMs = Date.now() - (req._startAt || Date.now());
 
+    console.log('[DEBUG] onResponse: traceId =', req.traceId, 'fastify.log =', !!fastify.log);
+
     // Используем fastify.log => это тот же pino, что в adapter
-    fastify.log.info(
-      {
-        traceId: req.traceId,
-        method: req.method,
-        url: req.url,
-        statusCode: reply.statusCode,
-        durationMs,
-      },
-      'http',
-    );
+    const log = fastify.log || (fastify as any).logger;
+    if (log && req.traceId) {
+      log.info(
+        {
+          traceId: req.traceId,
+          method: req.method,
+          url: req.url,
+          statusCode: reply.statusCode,
+          durationMs,
+        },
+        'http',
+      );
+    } else {
+      console.log('[DEBUG] onResponse: log not available or traceId missing');
+    }
 
     done();
   });

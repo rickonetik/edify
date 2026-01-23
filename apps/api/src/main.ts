@@ -3,8 +3,8 @@ import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { ApiEnvSchema, validateOrThrow } from '@tracked/shared';
 import { AppModule } from './app.module.js';
-import { requestIdPlugin } from './common/request-id/request-id.plugin.js';
 import { createPinoLogger } from './common/logging/pino.js';
+import { RequestIdInterceptor } from './common/request-id/request-id.interceptor.js';
 
 async function bootstrap() {
   const env = validateOrThrow(ApiEnvSchema, process.env);
@@ -16,10 +16,7 @@ async function bootstrap() {
     bufferLogs: false,
   });
 
-  const fastify = app.getHttpAdapter().getInstance();
-
-  // ВАЖНО: register до listen
-  await fastify.register(requestIdPlugin);
+  app.useGlobalInterceptors(new RequestIdInterceptor());
 
   await app.listen({ port: env.API_PORT, host: '0.0.0.0' });
 }
