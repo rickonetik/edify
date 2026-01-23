@@ -159,9 +159,9 @@ function main() {
   const checks = [
     { name: 'Workspace', fn: verifyWorkspace },
     { name: 'Deep Imports', fn: verifyDeepImports },
+    { name: 'Build', fn: verifyBuild }, // Build before typecheck (dependencies need to be built)
     { name: 'Lint', fn: verifyLint },
     { name: 'Typecheck', fn: verifyTypecheck },
-    { name: 'Build', fn: verifyBuild },
   ];
 
   const results = [];

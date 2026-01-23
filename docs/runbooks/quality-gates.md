@@ -39,9 +39,9 @@ Runs all automated quality gates:
 
 1. **Workspace** - Verifies all packages are recognized
 2. **Deep Imports** - Checks for forbidden `@tracked/shared/src/*` imports
-3. **Lint** - Runs ESLint across the repository
-4. **Typecheck** - Validates TypeScript types
-5. **Build** - Ensures all packages build successfully
+3. **Build** - Ensures all packages build successfully (must run before typecheck for dependencies)
+4. **Lint** - Runs ESLint across the repository
+5. **Typecheck** - Validates TypeScript types (requires dependencies to be built)
 
 ### Individual Checks
 
