@@ -30,6 +30,8 @@ pnpm -w build
 
 Все команды должны проходить без ошибок.
 
+**Note**: `pnpm -w lint` warnings are acceptable; only errors block the PR.
+
 ## Branch Naming
 
 Формат: `type/scope-short`

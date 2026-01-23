@@ -19,7 +19,7 @@ Not allowed:
 
 ## DoD Checklist
 
-- [ ] `pnpm -w lint` passes
+- [ ] `pnpm -w lint` passes (warnings are acceptable, errors are not)
 - [ ] `pnpm -w typecheck` passes
 - [ ] `pnpm -w build` passes
 - [ ] No unrelated refactors/renames
