@@ -12,6 +12,8 @@
     "clean": "turbo run clean && rm -rf node_modules",
     "dev": "turbo run dev --parallel",
     "dev:webapp": "pnpm --filter @tracked/webapp dev",
+    "start:api": "pnpm --filter @tracked/shared build && pnpm --filter @tracked/api start",
+    "dev:api": "pnpm --filter @tracked/shared build && pnpm --filter @tracked/api dev",
     "dev:public": "node -e \"const net = require('net'); const checkPort = (port) => new Promise((resolve) => { const server = net.createServer(); server.listen(port, () => { server.close(() => resolve(true)); }); server.on('error', () => resolve(false)); }); checkPort(5173).then((isOpen) => { if (!isOpen) { console.log('⚠️  Port 5173 is not listening. Start webapp first:'); console.log('   pnpm dev:webapp'); process.exit(1); } console.log('✅ Port 5173 is listening'); console.log(''); console.log('📋 Next steps:'); console.log(''); console.log('1. Start ngrok tunnel:'); console.log('   ngrok http 5173'); console.log(''); console.log('2. Copy the public URL from ngrok (e.g., https://xxxx.ngrok-free.app)'); console.log(''); console.log('3. Add to .env:'); console.log('   TELEGRAM_WEBAPP_URL=https://xxxx.ngrok-free.app'); console.log(''); console.log('4. Start bot:'); console.log('   BOT_TOKEN=your_token pnpm --filter @tracked/bot start'); console.log(''); console.log('📖 Full runbook: docs/runbooks/telegram-dev.md'); });\"",
     "verify": "node tools/verify/verify.mjs",
     "verify:deep-imports": "node tools/verify/verify.mjs --deep-imports-only",
