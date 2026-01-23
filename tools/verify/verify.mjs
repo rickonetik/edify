@@ -159,6 +159,7 @@ function main() {
   const checks = [
     { name: 'Workspace', fn: verifyWorkspace },
     { name: 'Deep Imports', fn: verifyDeepImports },
+    { name: 'Wildcard Paths', fn: verifyNoWildcardPaths },
     { name: 'Lint', fn: verifyLint },
     { name: 'Typecheck', fn: verifyTypecheck },
     { name: 'Build', fn: verifyBuild },

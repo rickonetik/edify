@@ -69,6 +69,8 @@ Do not rename packages, tsconfig files, or workspace structure unless the Story 
   - env schemas
 Never duplicate enums/DTOs/error codes in apps.
 
+**TypeScript Paths Rule**: Do not add tsconfig paths for `@tracked/shared/*` or any deep paths. Only `@tracked/shared` root mapping is allowed. Wildcard paths are forbidden and will break typecheck without build.
+
 ## Dependencies Policy (Strict)
 - Do NOT add new libraries unless the Story explicitly says so.
 - Prefer existing dependencies already in the repo.
