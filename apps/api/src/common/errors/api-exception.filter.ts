@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 import { ErrorCodes, type ApiErrorResponse } from '@tracked/shared';
 
@@ -8,7 +9,7 @@ export class ApiExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse();
     const request: any = ctx.getRequest();
 
-    // Гарантия traceId: проверяем req.traceId, затем заголовок x-request-id
+    // Гарантия traceId: проверяем req.traceId, затем заголовок x-request-id, иначе генерируем UUID
     const traceId =
       request?.traceId ??
       (typeof request?.headers?.['x-request-id'] === 'string'
@@ -17,7 +18,7 @@ export class ApiExceptionFilter implements ExceptionFilter {
       (Array.isArray(request?.headers?.['x-request-id'])
         ? request.headers['x-request-id'][0]
         : undefined) ??
-      'unknown';
+      crypto.randomUUID();
 
     let statusCode: number;
     let message: string;
@@ -87,7 +88,7 @@ export class ApiExceptionFilter implements ExceptionFilter {
     };
 
     // Ставим x-request-id header даже на ошибках
-    if (response?.header && traceId !== 'unknown') {
+    if (response?.header) {
       response.header('x-request-id', traceId);
     }
 
