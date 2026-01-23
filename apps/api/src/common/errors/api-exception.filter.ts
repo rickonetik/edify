@@ -8,7 +8,16 @@ export class ApiExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse();
     const request: any = ctx.getRequest();
 
-    const traceId = request?.traceId || 'unknown';
+    // Гарантия traceId: проверяем req.traceId, затем заголовок x-request-id
+    const traceId =
+      request?.traceId ??
+      (typeof request?.headers?.['x-request-id'] === 'string'
+        ? request.headers['x-request-id']
+        : undefined) ??
+      (Array.isArray(request?.headers?.['x-request-id'])
+        ? request.headers['x-request-id'][0]
+        : undefined) ??
+      'unknown';
 
     let statusCode: number;
     let message: string;
@@ -76,6 +85,11 @@ export class ApiExceptionFilter implements ExceptionFilter {
       traceId,
       ...(details !== undefined && { details }),
     };
+
+    // Ставим x-request-id header даже на ошибках
+    if (response?.header && traceId !== 'unknown') {
+      response.header('x-request-id', traceId);
+    }
 
     // Fastify reply API
     response.code(statusCode).send(errorResponse);
