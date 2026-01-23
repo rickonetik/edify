@@ -2,6 +2,5 @@
 > @tracked/bot@ typecheck /Users/user/Project/edify_main/apps/bot
 > tsc -b --noEmit
 
-tsconfig.json(9,18): error TS6306: Referenced project '/Users/user/Project/edify_main/packages/shared' must have setting "composite": true.
 tsconfig.json(9,18): error TS6310: Referenced project '/Users/user/Project/edify_main/packages/shared' may not disable emit.
- ELIFECYCLE  Command failed with exit code 2.
+ ELIFECYCLE  Command failed with exit code 1.

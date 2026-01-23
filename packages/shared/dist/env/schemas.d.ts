@@ -59,3 +59,4 @@ export declare const WebappEnvSchema: z.ZodObject<{
 export type ApiEnv = z.infer<typeof ApiEnvSchema>;
 export type BotEnv = z.infer<typeof BotEnvSchema>;
 export type WebappEnv = z.infer<typeof WebappEnvSchema>;
+//# sourceMappingURL=schemas.d.ts.map
