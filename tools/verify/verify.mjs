@@ -199,7 +199,7 @@ function verifyBuild() {
 function verifySharedConfig() {
   log('\n🔧 Checking shared package configuration...', colors.blue);
   try {
-    const configOutput = execSync('tsc -p packages/shared/tsconfig.json --showConfig', {
+    const configOutput = execSync('pnpm exec tsc -p packages/shared/tsconfig.json --showConfig', {
       encoding: 'utf-8',
       cwd: process.cwd(),
       stdio: 'pipe',
