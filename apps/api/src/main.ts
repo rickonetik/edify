@@ -10,7 +10,7 @@ import { ApiExceptionFilter } from './common/errors/api-exception.filter.js';
 import fastifyStatic from '@fastify/static';
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
-import { readdirSync } from 'node:fs/promises';
+import { readdir } from 'node:fs/promises';
 
 async function bootstrap() {
   const env = validateOrThrow(ApiEnvSchema, process.env);
