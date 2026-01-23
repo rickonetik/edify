@@ -134,10 +134,11 @@ function main() {
   // B) Check for duplicates
   log('\n🔍 B) Duplication Check', colors.blue);
   if (tool === 'rg') {
+    // Check for duplicate error codes, but exclude swagger examples and imports
     checks.push(
       runCheck(
-        'No duplicate error codes in apps',
-        "rg 'export enum ErrorCodes|VALIDATION_ERROR|INTERNAL_ERROR' -n apps --glob '!**/node_modules/**' --glob '!**/dist/**' -t ts -t tsx",
+        'No duplicate error codes in apps (excluding swagger examples)',
+        "rg 'export enum ErrorCodes|const ErrorCodes|VALIDATION_ERROR.*=|INTERNAL_ERROR.*=' -n apps --glob '!**/node_modules/**' --glob '!**/dist/**' --glob '!**/*.test.*' --glob '!**/*.spec.*' -t ts -t tsx",
         0,
       ),
     );
