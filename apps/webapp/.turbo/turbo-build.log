@@ -1,14 +1,12 @@
 
 > @tracked/webapp@0.0.0 build /Users/user/Project/edify_main/apps/webapp
-> tsc -b && vite build
+> tsc && vite build
 
-vite v7.3.1 building client environment for production...
+vite v5.4.21 building for production...
 transforming...
-✓ 32 modules transformed.
+✓ 37 modules transformed.
 rendering chunks...
 computing gzip size...
-dist/index.html                   0.45 kB │ gzip:  0.29 kB
-dist/assets/react-CHdo91hT.svg    4.13 kB │ gzip:  2.14 kB
-dist/assets/index-COcDBgFa.css    1.38 kB │ gzip:  0.71 kB
-dist/assets/index-BWMuc5b_.js   193.91 kB │ gzip: 60.88 kB
-✓ built in 268ms
+dist/index.html                  0.34 kB │ gzip:  0.24 kB
+dist/assets/index-BVju2p46.js  204.85 kB │ gzip: 66.71 kB
+✓ built in 309ms

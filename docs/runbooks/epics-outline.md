@@ -205,3 +205,41 @@
 
 - Ветка: `chore/monorepo-scaffold`
 - Коммит: готов к созданию (вместе с обновлением epics-outline.md)
+
+### 0.5a Fix workspace + restore webapp scaffold + node types
+
+**Status:** ✅ Completed  
+**PR:** chore/fix-workspace-webapp-node-types
+
+**Выполнено:**
+
+- Исправлен workspace:
+  - Включен corepack и закреплена версия pnpm@9.0.0
+  - `pnpm -w list --depth -1` теперь показывает все 4 пакета
+- Добавлен `@types/node` в devDependencies:
+  - `apps/api/package.json`
+  - `apps/bot/package.json`
+  - `apps/webapp/package.json`
+- Добавлен `"types": ["node"]` в tsconfig для api и bot
+- Восстановлен scaffold webapp:
+  - `index.html`
+  - `vite.config.ts`
+  - `tsconfig.json`, `tsconfig.app.json`, `tsconfig.node.json`
+  - `src/main.tsx`
+  - `src/App.tsx`
+  - `src/app/router.tsx` (React Router)
+  - `src/pages/LearnPage.tsx`, `LibraryPage.tsx`, `AccountPage.tsx`
+  - Зависимости: react, react-dom, react-router-dom, @vitejs/plugin-react
+
+**Проверено:**
+
+- ✅ `pnpm -w list --depth -1` показывает 4 пакета
+- ✅ `pnpm -w build` проходит
+- ✅ `pnpm -w typecheck` проходит
+- ✅ `pnpm -w lint` проходит
+- ✅ `pnpm --filter @tracked/webapp dev` запускается
+
+**Git:**
+
+- Ветка: `chore/monorepo-scaffold`
+- Коммит: готов к созданию
