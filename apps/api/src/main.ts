@@ -35,18 +35,26 @@ async function bootstrap() {
     const document = SwaggerModule.createDocument(app, config);
 
     // Register static files for Swagger UI (required for Fastify)
-    // Find swagger-ui-dist in pnpm structure or direct node_modules
+    // Use createRequire to resolve swagger-ui-dist from any location
     const fastifyInstance = app.getHttpAdapter().getInstance();
-    let swaggerUiPath = join(process.cwd(), 'node_modules/swagger-ui-dist');
+    const require = createRequire(import.meta.url);
+    let swaggerUiPath: string;
 
-    // Try pnpm structure if direct path doesn't exist
-    if (!existsSync(swaggerUiPath)) {
+    try {
+      // Try to resolve swagger-ui-dist using require.resolve
+      const resolvedPath = require.resolve('swagger-ui-dist/package.json');
+      swaggerUiPath = dirname(resolvedPath);
+    } catch {
+      // Fallback: try pnpm structure
       const pnpmPath = join(
         process.cwd(),
         'node_modules/.pnpm/swagger-ui-dist@5.31.0/node_modules/swagger-ui-dist',
       );
       if (existsSync(pnpmPath)) {
         swaggerUiPath = pnpmPath;
+      } else {
+        // Last fallback: direct node_modules
+        swaggerUiPath = join(process.cwd(), 'node_modules/swagger-ui-dist');
       }
     }
 
