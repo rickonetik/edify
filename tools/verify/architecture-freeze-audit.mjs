@@ -137,79 +137,87 @@ function main() {
     // Check for duplicate error codes, but exclude swagger examples
     // Only check actual definitions: export enum, const declarations, or assignments
     // Exclude lines containing 'schema:', 'example:', or '@ApiResponse' (swagger decorators)
-    if (tool === 'rg') {
-      // Use ripgrep with negative lookahead to exclude swagger examples
-      const output = execSync(
-        "rg 'export enum ErrorCodes|export const ErrorCodes|ErrorCodes\\s*=|VALIDATION_ERROR\\s*=|INTERNAL_ERROR\\s*=' -n apps --glob '!**/node_modules/**' --glob '!**/dist/**' --glob '!**/*.test.*' --glob '!**/*.spec.*' -t ts -t tsx",
-        { encoding: 'utf-8', stdio: 'pipe' },
-      );
-      const lines = output
-        .trim()
-        .split('\n')
-        .filter((line) => {
-          // Exclude swagger examples and decorators
-          return (
-            !line.includes('schema:') &&
-            !line.includes('example:') &&
-            !line.includes('@ApiResponse') &&
-            !line.includes("code: '") && // Exclude string literals in examples
-            !line.includes('code: "') // Exclude string literals in examples
-          );
-        })
-        .filter((line) => {
-          // Only keep actual definitions (export, const, assignments)
-          return (
-            line.includes('export enum') ||
-            line.includes('export const') ||
-            line.includes('ErrorCodes.') || // Usage of ErrorCodes from shared
-            line.includes('= ErrorCodes.') // Assignment from ErrorCodes
-          );
-        });
+    const output = execSync(
+      "rg 'export enum ErrorCodes|export const ErrorCodes|ErrorCodes\\s*=|VALIDATION_ERROR\\s*=|INTERNAL_ERROR\\s*=' -n apps --glob '!**/node_modules/**' --glob '!**/dist/**' --glob '!**/*.test.*' --glob '!**/*.spec.*' -t ts -t tsx",
+      { encoding: 'utf-8', stdio: 'pipe' },
+    );
 
-      if (lines.length > 0) {
-        error('No duplicate error codes in apps (excluding swagger examples): Found definitions');
-        console.log(lines.join('\n'));
-        checks.push(false);
-      } else {
-        success('No duplicate error codes in apps (excluding swagger examples): OK');
-        checks.push(true);
+    // Split output into lines and check context
+    const allLines = output.trim().split('\n');
+    const lines = [];
+
+    for (let i = 0; i < allLines.length; i++) {
+      const line = allLines[i];
+      const lowerLine = line.toLowerCase();
+
+      // Check if this line or nearby lines contain swagger context
+      const contextLines = [
+        allLines[Math.max(0, i - 3)],
+        allLines[Math.max(0, i - 2)],
+        allLines[Math.max(0, i - 1)],
+        line,
+        allLines[Math.min(allLines.length - 1, i + 1)],
+        allLines[Math.min(allLines.length - 1, i + 2)],
+        allLines[Math.min(allLines.length - 1, i + 3)],
+      ]
+        .filter((l) => l)
+        .join(' ');
+
+      const isSwaggerExample =
+        contextLines.toLowerCase().includes('schema:') ||
+        contextLines.toLowerCase().includes('example:') ||
+        contextLines.toLowerCase().includes('@apiresponse') ||
+        line.match(/code:\s*['"]/) || // Any code: "..." or code: '...' (string literals)
+        line.match(/['"]code['"]/); // "code" as string key
+
+      if (isSwaggerExample) {
+        continue; // Skip swagger examples
       }
-    } else {
-      // Fallback to simpler check for grep
-      checks.push(
-        runCheck(
-          'No duplicate error codes in apps (excluding swagger examples)',
-          "grep -R 'export enum ErrorCodes\\|export const ErrorCodes' apps --include='*.ts' --include='*.tsx' --exclude-dir=node_modules --exclude-dir=dist --exclude='*.test.*' --exclude='*.spec.*' -n",
-          0,
-        ),
-      );
+
+      // Only keep actual definitions (export, const, assignments from ErrorCodes enum)
+      if (
+        line.includes('export enum ErrorCodes') ||
+        line.includes('export const ErrorCodes') ||
+        (line.includes('ErrorCodes.') && !line.match(/['"]/)) // Usage of ErrorCodes from shared (not string literal)
+      ) {
+        lines.push(line);
+      }
     }
+
+    if (lines.length > 0) {
+      error('No duplicate error codes in apps (excluding swagger examples): Found definitions');
+      console.log(lines.join('\n'));
+      checks.push(false);
+    } else {
+      success('No duplicate error codes in apps (excluding swagger examples): OK');
+      checks.push(true);
+    }
+  } else {
+    // Fallback to simpler check for grep
     checks.push(
       runCheck(
-        'No deep imports from @tracked/shared/src',
-        "rg '@tracked/shared/src' -n --glob '!**/node_modules/**' --glob '!**/dist/**' -t ts -t tsx -t js -t jsx",
+        'No duplicate error codes in apps (excluding swagger examples)',
+        "grep -R 'export enum ErrorCodes\\|export const ErrorCodes' apps --include='*.ts' --include='*.tsx' --exclude-dir=node_modules --exclude-dir=dist --exclude='*.test.*' --exclude='*.spec.*' -n",
         0,
       ),
     );
+  }
+
+  checks.push(
+    runCheck(
+      'No deep imports from @tracked/shared/src',
+      tool === 'rg'
+        ? "rg '@tracked/shared/src' -n --glob '!**/node_modules/**' --glob '!**/dist/**' -t ts -t tsx -t js -t jsx"
+        : "grep -R '@tracked/shared/src' . --include='*.ts' --include='*.tsx' --include='*.js' --include='*.jsx' --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=.git -n",
+      0,
+    ),
+  );
+
+  if (tool === 'rg') {
     checks.push(
       runCheck(
         'No wildcard paths in tsconfig',
         "rg '@tracked/shared/\\\\*' -n --glob '**/tsconfig*.json' --glob '!**/node_modules/**' --glob '!**/dist/**'",
-        0,
-      ),
-    );
-  } else {
-    checks.push(
-      runCheck(
-        'No duplicate error codes in apps',
-        "grep -R 'export enum ErrorCodes\\|VALIDATION_ERROR\\|INTERNAL_ERROR' apps --include='*.ts' --include='*.tsx' --exclude-dir=node_modules --exclude-dir=dist -n",
-        0,
-      ),
-    );
-    checks.push(
-      runCheck(
-        'No deep imports from @tracked/shared/src',
-        "grep -R '@tracked/shared/src' . --include='*.ts' --include='*.tsx' --include='*.js' --include='*.jsx' --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=.git -n",
         0,
       ),
     );
