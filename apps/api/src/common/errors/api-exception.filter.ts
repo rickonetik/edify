@@ -23,23 +23,19 @@ export class ApiExceptionFilter implements ExceptionFilter {
         message = exceptionResponse;
       } else if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
         const resp = exceptionResponse as any;
-        message = resp.message || exception.message || 'Bad Request';
 
         // Для 400 (валидация) прокидываем details, если есть
-        if (statusCode === HttpStatus.BAD_REQUEST) {
-          if (Array.isArray(resp.message)) {
-            details = resp.message;
-          } else if (resp.errors) {
-            details = resp.errors;
-          } else if (resp.details) {
-            details = resp.details;
-          } else {
-            // Если весь response - это объект с данными (не только message)
-            const { message: _, error: __, ...rest } = resp;
-            if (Object.keys(rest).length > 0) {
-              details = rest;
-            }
-          }
+        if (statusCode === HttpStatus.BAD_REQUEST && Array.isArray(resp.message)) {
+          message = 'Validation failed';
+          details = resp.message;
+        } else if (statusCode === HttpStatus.BAD_REQUEST && resp.errors) {
+          message = resp.message || 'Validation failed';
+          details = resp.errors;
+        } else if (statusCode === HttpStatus.BAD_REQUEST && resp.details) {
+          message = resp.message || 'Validation failed';
+          details = resp.details;
+        } else {
+          message = resp.message || exception.message || 'Bad Request';
         }
       } else {
         message = exception.message || 'Bad Request';
