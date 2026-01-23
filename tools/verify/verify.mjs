@@ -199,11 +199,12 @@ function verifyBuild() {
 function verifySharedConfig() {
   log('\n🔧 Checking shared package configuration...', colors.blue);
   try {
-    const config = execSync('tsc -p packages/shared/tsconfig.json --showConfig', {
+    const configOutput = execSync('tsc -p packages/shared/tsconfig.json --showConfig', {
       encoding: 'utf-8',
       cwd: process.cwd(),
+      stdio: 'pipe',
     });
-    const configObj = JSON.parse(config);
+    const configObj = JSON.parse(configOutput);
     const compilerOptions = configObj.compilerOptions || {};
 
     const checks = [
@@ -245,6 +246,9 @@ function verifySharedConfig() {
     return true;
   } catch (err) {
     error(`Failed: ${err.message}`);
+    if (err.stdout) {
+      log(`  Output: ${err.stdout}`, colors.yellow);
+    }
     return false;
   }
 }
