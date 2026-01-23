@@ -22,6 +22,7 @@
     "pino": "^9.5.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "swagger-ui-dist": "^5.31.0",
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
