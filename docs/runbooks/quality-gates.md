@@ -43,7 +43,7 @@ Runs all automated quality gates:
 4. **Typecheck** - Validates TypeScript types (uses TS project references, no build required)
 5. **Build** - Ensures all packages build successfully
 
-**Note**: Typecheck uses TypeScript project references and does not depend on build artifacts. Dependencies are type-checked from source via `tsconfig.json` references.
+**Note**: Typecheck uses TypeScript path mapping (`@tracked/shared` → source) and does not depend on build artifacts. Dependencies are type-checked from source files directly. The `shared` package is configured as `composite` for future build optimizations, but typecheck relies on paths mapping, not references.
 
 ### Individual Checks
 
