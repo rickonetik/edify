@@ -1,11 +1,23 @@
 import { BadRequestException, Controller, Get } from '@nestjs/common';
+import { ApiOkResponse, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ApiEnvSchema, validateOrThrow } from '@tracked/shared';
 
 const env = validateOrThrow(ApiEnvSchema, process.env);
 
+@ApiTags('Health')
 @Controller()
 export class HealthController {
   @Get('health')
+  @ApiOkResponse({
+    description: 'Health check endpoint',
+    schema: {
+      example: {
+        ok: true,
+        env: 'development',
+        version: '0.0.0',
+      },
+    },
+  })
   getHealth() {
     return {
       ok: true,
@@ -16,11 +28,36 @@ export class HealthController {
 
   // Тестовые endpoints для проверки формата ошибок (только для dev)
   @Get('health/error')
+  @ApiResponse({
+    status: 500,
+    description: 'Internal server error',
+    schema: {
+      example: {
+        statusCode: 500,
+        code: 'INTERNAL_ERROR',
+        message: 'Internal Server Error',
+        traceId: 'a4f0c291-af45-47ca-ae9d-9a54a6e59b93',
+      },
+    },
+  })
   getError() {
     throw new Error('boom');
   }
 
   @Get('health/400')
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error',
+    schema: {
+      example: {
+        statusCode: 400,
+        code: 'VALIDATION_ERROR',
+        message: 'Validation failed',
+        traceId: 'test-123',
+        details: ['field1 is required', 'field2 must be a string'],
+      },
+    },
+  })
   get400() {
     throw new BadRequestException({
       message: ['field1 is required', 'field2 must be a string'],

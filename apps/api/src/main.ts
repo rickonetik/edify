@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ApiEnvSchema, validateOrThrow } from '@tracked/shared';
 import { AppModule } from './app.module.js';
 import { createPinoLogger } from './common/logging/pino.js';
@@ -19,6 +20,18 @@ async function bootstrap() {
 
   app.useGlobalInterceptors(new RequestIdInterceptor());
   app.useGlobalFilters(new ApiExceptionFilter());
+
+  // Swagger только в dev
+  if (env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('tracked-lms API')
+      .setDescription('Telegram Mini App backend')
+      .setVersion(process.env.npm_package_version || '0.0.0')
+      .build();
+
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('/docs', app, document);
+  }
 
   await app.listen({ port: env.API_PORT, host: '0.0.0.0' });
 }
