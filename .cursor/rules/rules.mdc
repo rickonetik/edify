@@ -206,6 +206,27 @@ The `pnpm verify` command runs:
 
 See [docs/runbooks/quality-gates.md](../docs/runbooks/quality-gates.md) for details.
 
+## EPIC 1 Pre-Flight Checklist
+
+**Before starting ANY Story in EPIC 1, you MUST attach:**
+
+1. **Output of commands:**
+   ```bash
+   pnpm verify
+   pnpm test:foundation
+   pnpm audit:architecture
+   ```
+
+2. **Screenshot (or log) from GitHub Actions** showing green run on `main`
+
+3. **Manual smoke test results:**
+   - `curl -i http://localhost:3001/health` (showing `x-request-id` header)
+   - `curl -i http://localhost:3001/docs` returns `200` in dev, `404` in prod
+
+**If any of these fail, the Story cannot start. Fix Foundation issues first.**
+
+See [docs/runbooks/epic0-final-rc-checklist.md](../docs/runbooks/epic0-final-rc-checklist.md) for full checklist.
+
 ## Stop Condition
 After completing the current Story DoD and Manual QA, STOP.
 Do not start the next Story.
