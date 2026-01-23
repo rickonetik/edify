@@ -287,10 +287,10 @@ function verifyNoManualErrorFormat() {
   if (checkCommandExists('rg')) {
     tool = 'ripgrep (rg)';
     // Search in API source, exclude error filter (it's allowed to format errors)
-    command = `rg "${pattern}" -n apps/api/src --glob '!**/node_modules/**' --glob '!**/dist/**' --glob '!**/errors/**' -t ts`;
+    command = `rg 'statusCode"\\s*:' -n apps/api/src --glob '!**/node_modules/**' --glob '!**/dist/**' --glob '!**/errors/**' -t ts`;
   } else if (checkCommandExists('grep')) {
     tool = 'grep';
-    command = `grep -R "${pattern}" apps/api/src --include='*.ts' --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=errors -n`;
+    command = `grep -R 'statusCode"\\s*:' apps/api/src --include='*.ts' --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=errors -n`;
   } else {
     error('Neither ripgrep (rg) nor grep found. Please install ripgrep: brew install ripgrep');
     process.exit(1);
