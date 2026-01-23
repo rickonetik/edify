@@ -4,14 +4,12 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 export const logger = isProduction
   ? pino({ level: 'info' })
-  : pino(
-      { level: 'info' },
-      {
-        transport: {
-          target: 'pino-pretty',
-          options: {
-            colorize: true,
-          },
+  : pino({
+      level: 'info',
+      transport: {
+        target: 'pino-pretty',
+        options: {
+          colorize: true,
         },
       },
-    );
+    });

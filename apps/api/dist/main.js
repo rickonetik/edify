@@ -2,9 +2,9 @@ import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
 import { ApiEnvSchema, validateOrThrow } from '@tracked/shared';
-import { logger } from './common/logging/pino';
-import requestIdPlugin from './common/request-id/request-id.plugin';
-import { AppModule } from './app.module';
+import { logger } from './common/logging/pino.js';
+import requestIdPlugin from './common/request-id/request-id.plugin.js';
+import { AppModule } from './app.module.js';
 const env = validateOrThrow(ApiEnvSchema, process.env);
 async function bootstrap() {
     const adapter = new FastifyAdapter({
@@ -13,7 +13,7 @@ async function bootstrap() {
     const app = await NestFactory.create(AppModule, adapter);
     const fastifyInstance = app.getHttpAdapter().getInstance();
     fastifyInstance.register(requestIdPlugin);
-    fastifyInstance.addHook('onResponse', async (request, reply) => {
+    fastifyInstance.addHook('onResponse', async function (request, reply) {
         const startAt = request._startAt || Date.now();
         const duration = Date.now() - startAt;
         logger.info({
