@@ -15,6 +15,7 @@ export default [
           '**/*.cjs',
           '**/*.config.cjs',
           'tools/verify/**',
+          'tools/tests/**', // Exclude test files from linting (Node.js built-in test)
         ],
       },
 
