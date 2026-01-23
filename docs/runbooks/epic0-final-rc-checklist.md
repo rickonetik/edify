@@ -177,7 +177,16 @@ Check latest workflow run in Actions:
 
 **Before starting ANY Story in EPIC 1, Cursor must attach:**
 
-1. **Output of commands:**
+1. **Git status verification:**
+
+   ```bash
+   git checkout main
+   git pull
+   git status  # Must be clean
+   git rev-parse HEAD  # Include this in PR artifacts
+   ```
+
+2. **Output of commands (copy-paste stdout):**
 
    ```bash
    pnpm verify
@@ -185,13 +194,40 @@ Check latest workflow run in Actions:
    pnpm audit:architecture
    ```
 
-2. **Screenshot (or log) from Actions** showing green run on `main`
+3. **GitHub Actions link:**
+   - Link to latest Actions run on `main`
+   - Must show `success` (not "skipped" or "cancelled")
 
-3. **Manual smoke test results:**
-   - `curl /health` (showing `x-request-id`)
-   - `/docs` returns `200` in dev, `404` in prod
+4. **Manual smoke test results (actual curl output):**
+   - `curl -i http://localhost:3001/health` (showing `x-request-id` header)
+   - `curl -i http://localhost:3001/docs` returns `200` in dev, `404` in prod
+   - `curl -i http://localhost:3001/nope` returns `404` with unified error format
 
 **If any of these fail, the Story cannot start.**
+
+## PR Artifacts Requirement (EPIC 1+)
+
+**Every PR for EPIC 1 Stories MUST include in "Артефакты PR" section:**
+
+1. **Git commit hash:**
+
+   ```bash
+   git rev-parse HEAD
+   ```
+
+2. **Link to GitHub Actions run** (if PR triggers CI)
+
+3. **Copy-paste stdout of three commands:**
+
+   ```bash
+   pnpm verify
+   pnpm test:foundation
+   pnpm audit:architecture
+   ```
+
+4. **Manual smoke test results** (actual curl output, not just "works")
+
+**Without these artifacts, PR is NOT considered complete.**
 
 ## Summary
 
