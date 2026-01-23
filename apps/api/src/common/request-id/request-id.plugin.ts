@@ -1,22 +1,44 @@
-import type { FastifyRequest, FastifyReply } from 'fastify';
-import { randomUUID } from 'crypto';
+import crypto from 'node:crypto';
 
-declare module 'fastify' {
-  interface FastifyRequest {
-    traceId: string;
-    _startAt?: number;
-  }
-}
-
-async function requestIdPlugin(fastify: any) {
+export async function requestIdPlugin(fastify: any) {
   fastify.decorateRequest('traceId', '');
+  fastify.decorateRequest('_startAt', 0);
 
-  fastify.addHook('onRequest', async function (request: FastifyRequest, reply: FastifyReply) {
-    const incomingId = request.headers['x-request-id'];
-    request.traceId = typeof incomingId === 'string' ? incomingId : randomUUID();
-    request._startAt = Date.now();
-    reply.header('x-request-id', request.traceId);
+  fastify.addHook('onRequest', (req: any, reply: any, done: any) => {
+    const h = req.headers['x-request-id'];
+    const incoming = Array.isArray(h) ? h[0] : h;
+    const traceId =
+      typeof incoming === 'string' && incoming.trim().length > 0
+        ? incoming.trim()
+        : crypto.randomUUID();
+
+    req.traceId = traceId;
+    req._startAt = Date.now();
+
+    done();
+  });
+
+  // ГАРАНТИЯ: header ставится прямо перед отправкой
+  fastify.addHook('onSend', (req: any, reply: any, payload: any, done: any) => {
+    reply.header('x-request-id', req.traceId);
+    done(null, payload);
+  });
+
+  fastify.addHook('onResponse', (req: any, reply: any, done: any) => {
+    const durationMs = Date.now() - (req._startAt || Date.now());
+
+    // Используем fastify.log => это тот же pino, что в adapter
+    fastify.log.info(
+      {
+        traceId: req.traceId,
+        method: req.method,
+        url: req.url,
+        statusCode: reply.statusCode,
+        durationMs,
+      },
+      'http',
+    );
+
+    done();
   });
 }
-
-export default requestIdPlugin;

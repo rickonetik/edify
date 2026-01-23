@@ -1,15 +1,17 @@
 import pino from 'pino';
 
-const isProduction = process.env.NODE_ENV === 'production';
+export function createPinoLogger(nodeEnv: string) {
+  const isProduction = nodeEnv === 'production';
 
-export const logger = isProduction
-  ? pino({ level: 'info' })
-  : pino({
-      level: 'info',
-      transport: {
-        target: 'pino-pretty',
-        options: {
-          colorize: true,
+  return isProduction
+    ? pino({ level: 'info' })
+    : pino({
+        level: 'info',
+        transport: {
+          target: 'pino-pretty',
+          options: {
+            colorize: true,
+          },
         },
-      },
-    });
+      });
+}
