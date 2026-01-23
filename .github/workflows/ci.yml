@@ -26,5 +26,8 @@ jobs:
       - name: Install deps
         run: pnpm i --frozen-lockfile
 
+      - name: Sanity check (workspace packages)
+        run: pnpm -r list --depth 0
+
       - name: Verify
         run: pnpm verify
