@@ -1,5 +1,15 @@
 # Repository Workflow
 
+## Workspace Verification
+
+To list all packages in the workspace, use:
+
+```bash
+pnpm -r list --depth 0
+```
+
+This shows all packages: @tracked/api, @tracked/bot, @tracked/shared, @tracked/webapp.
+
 ## One Story = One PR
 
 Каждая Story должна быть реализована в отдельном PR. Не смешивать несколько Stories в одном PR.
