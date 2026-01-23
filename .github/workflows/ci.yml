@@ -26,11 +26,5 @@ jobs:
       - name: Install deps
         run: pnpm i --frozen-lockfile
 
-      - name: Lint
-        run: pnpm -w lint
-
-      - name: Typecheck
-        run: pnpm -w typecheck
-
-      - name: Build
-        run: pnpm -w build
+      - name: Verify
+        run: pnpm verify
