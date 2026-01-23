@@ -1,4 +1,4 @@
 
 > @tracked/shared@ typecheck /Users/user/Project/edify_main/packages/shared
-> tsc -b --noEmit
+> tsc -p tsconfig.json --noEmit
 
