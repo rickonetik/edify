@@ -1,0 +1,4 @@
+
+> @tracked/api@ build /Users/user/Project/edify_main/apps/api
+> tsc -p tsconfig.json
+

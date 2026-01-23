@@ -1,0 +1,4 @@
+
+> @tracked/webapp@0.0.0 typecheck /Users/user/Project/edify_main/apps/webapp
+> tsc -b --noEmit
+

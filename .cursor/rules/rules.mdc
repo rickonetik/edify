@@ -1,0 +1,112 @@
+---
+name: rules
+description: Project rules for tracked-lms (Cursor mandatory)
+---
+
+# Overview
+Mandatory rules for all changes in tracked-lms. Follow them strictly to avoid architecture drift.
+- Epic order is mandatory; see docs/runbooks/epics-outline.md
+- Do not implement outside the current Story scope
+
+# Project Rules (tracked-lms) — Mandatory
+
+## Prime Directive (Scope Control)
+- Follow scope boundaries strictly.
+- If a task does not explicitly ask for it, DO NOT do it.
+- No refactors, no renames, no dependency additions, no folder reshuffles unless explicitly requested by the current Story.
+- If requirements are unclear or missing inputs, DO NOT guess. Ask for clarification or implement the smallest safe stub consistent with the Story.
+
+## Execution Mode (PR Discipline)
+- Work on exactly ONE Story per PR.
+- Keep changes minimal and localized to the Story scope.
+- End every PR with a final summary:
+  1) changed files list
+  2) commands run + results
+  3) manual QA checklist results
+  4) artifacts produced (logs/screens/recordings)
+
+## Repo Structure Invariants (Do Not Break)
+Do not change these paths without an explicit Story:
+- apps/api
+- apps/webapp
+- apps/bot
+- packages/shared
+- infra
+- docs
+- tools
+- .cursor
+Do not rename packages, tsconfig files, or workspace structure unless the Story explicitly demands it.
+
+## Configuration / Infra Safety
+- Do NOT modify tooling configs (tsconfig/eslint/prettier/vite/turbo/docker-compose/github actions) unless the Story explicitly asks.
+- If a config change is required, explain why and keep it minimal.
+- Never change ports, service names, or env keys without explicit requirement.
+
+## Code Ownership by Layer
+### WebApp
+- UI components live under: apps/webapp/src/**
+- Data fetching is forbidden inside UI components.
+- Data access must go through:
+  - apps/webapp/src/shared/api/*
+  - apps/webapp/src/shared/hooks/*
+- No business logic in UI. UI only renders states and triggers actions via hooks.
+
+### API
+- Domain modules live under: apps/api/src/modules/<domain>
+- Cross-cutting code lives under: apps/api/src/common/*
+- Controllers must be thin: controllers delegate to services.
+- Every endpoint must use the unified error format (no ad-hoc JSON).
+
+### Bot
+- Bot features live under: apps/bot/src/*
+- Validate env at boot. Never start with missing BOT_TOKEN.
+- Bot must not contain core business logic; it calls API or queues jobs.
+
+### Shared (Single Source of Truth)
+- packages/shared is the single source of truth for:
+  - DTO/contracts
+  - error codes and error response shape
+  - env schemas
+Never duplicate enums/DTOs/error codes in apps.
+
+## Dependencies Policy (Strict)
+- Do NOT add new libraries unless the Story explicitly says so.
+- Prefer existing dependencies already in the repo.
+- If a new dependency is unavoidable:
+  - explain why
+  - list at least 1 alternative
+  - keep it to 1 library max for the Story
+
+## Database / Migrations Discipline
+- DB schema changes are allowed only when explicitly required by the Story.
+- Migrations must be deterministic and committed.
+- Do not introduce extra columns/tables “for future” unless requested.
+
+## Environment Variables
+- All apps must validate env on startup using shared schemas.
+- Do not hardcode ports. Use env.
+- Do not introduce new env keys unless required by the Story.
+
+## Logging, Errors, and Security
+- API must set/propagate x-request-id and include traceId in error responses.
+- API errors must return:
+  { statusCode, code, message, traceId, details? }
+- Never leak secrets in logs.
+- Do not store credentials, tokens, or secrets in code or git.
+- Storage links:
+  - Do not store raw public S3/MinIO URLs in DB unless explicitly allowed by the Story.
+  - Prefer storing object keys + generating signed URLs on read (when in scope).
+
+## Formatting & Linting
+- Keep formatting consistent with repo configs.
+- Do not reformat unrelated files.
+- Changes must be minimal and localized.
+
+## Git Discipline
+- Branch naming: type/scope-short (e.g., chore/infra-compose)
+- One Story = one PR.
+- Commit messages should be conventional style when possible.
+
+## Stop Condition
+After completing the current Story DoD and Manual QA, STOP.
+Do not start the next Story.

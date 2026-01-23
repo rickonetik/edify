@@ -1,0 +1,4 @@
+
+> @tracked/bot@ typecheck /Users/user/Project/edify_main/apps/bot
+> tsc -p tsconfig.json --noEmit
+
