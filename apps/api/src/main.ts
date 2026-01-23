@@ -10,6 +10,7 @@ import { ApiExceptionFilter } from './common/errors/api-exception.filter.js';
 import fastifyStatic from '@fastify/static';
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
+import { readdirSync } from 'node:fs/promises';
 
 async function bootstrap() {
   const env = validateOrThrow(ApiEnvSchema, process.env);
@@ -35,25 +36,32 @@ async function bootstrap() {
     const document = SwaggerModule.createDocument(app, config);
 
     // Register static files for Swagger UI (required for Fastify)
-    // Use createRequire to resolve swagger-ui-dist from any location
+    // Find swagger-ui-dist in pnpm structure (pnpm hoists packages)
     const fastifyInstance = app.getHttpAdapter().getInstance();
-    const require = createRequire(import.meta.url);
     let swaggerUiPath: string;
 
-    try {
-      // Try to resolve swagger-ui-dist using require.resolve
-      const resolvedPath = require.resolve('swagger-ui-dist/package.json');
-      swaggerUiPath = dirname(resolvedPath);
-    } catch {
-      // Fallback: try pnpm structure
-      const pnpmPath = join(
-        process.cwd(),
-        'node_modules/.pnpm/swagger-ui-dist@5.31.0/node_modules/swagger-ui-dist',
-      );
-      if (existsSync(pnpmPath)) {
-        swaggerUiPath = pnpmPath;
-      } else {
-        // Last fallback: direct node_modules
+    // Try pnpm structure first (most common with pnpm)
+    const pnpmPath = join(
+      process.cwd(),
+      'node_modules/.pnpm/swagger-ui-dist@5.31.0/node_modules/swagger-ui-dist',
+    );
+    if (existsSync(pnpmPath)) {
+      swaggerUiPath = pnpmPath;
+    } else {
+      // Fallback: try to find any swagger-ui-dist in .pnpm
+      const pnpmDir = join(process.cwd(), 'node_modules/.pnpm');
+      if (existsSync(pnpmDir)) {
+        const dirs = readdirSync(pnpmDir);
+        const swaggerDir = dirs.find((d) => d.startsWith('swagger-ui-dist@'));
+        if (swaggerDir) {
+          const foundPath = join(pnpmDir, swaggerDir, 'node_modules/swagger-ui-dist');
+          if (existsSync(foundPath)) {
+            swaggerUiPath = foundPath;
+          }
+        }
+      }
+      // Last fallback: direct node_modules
+      if (!swaggerUiPath) {
         swaggerUiPath = join(process.cwd(), 'node_modules/swagger-ui-dist');
       }
     }
