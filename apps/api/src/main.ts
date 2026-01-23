@@ -30,51 +30,7 @@ async function bootstrap() {
       .build();
 
     const document = SwaggerModule.createDocument(app, config);
-
-    // Register static files for Swagger UI (required for Fastify)
-    // Find swagger-ui-dist in pnpm structure (pnpm hoists packages)
-    const fastifyInstance = app.getHttpAdapter().getInstance();
-    let swaggerUiPath: string | undefined;
-
-    // Try pnpm structure first (most common with pnpm)
-    const pnpmPath = join(
-      process.cwd(),
-      'node_modules/.pnpm/swagger-ui-dist@5.31.0/node_modules/swagger-ui-dist',
-    );
-    if (existsSync(pnpmPath)) {
-      swaggerUiPath = pnpmPath;
-    } else {
-      // Fallback: try to find any swagger-ui-dist in .pnpm
-      const pnpmDir = join(process.cwd(), 'node_modules/.pnpm');
-      if (existsSync(pnpmDir)) {
-        const dirs = readdirSync(pnpmDir);
-        const swaggerDir = dirs.find((d: string) => d.startsWith('swagger-ui-dist@'));
-        if (swaggerDir) {
-          const foundPath = join(pnpmDir, swaggerDir, 'node_modules/swagger-ui-dist');
-          if (existsSync(foundPath)) {
-            swaggerUiPath = foundPath;
-          }
-        }
-      }
-      // Last fallback: direct node_modules
-      if (!swaggerUiPath) {
-        swaggerUiPath = join(process.cwd(), 'node_modules/swagger-ui-dist');
-      }
-    }
-
-    // Register static files for Swagger UI (required for Fastify)
-    // SwaggerModule.setup with Fastify needs static files registered first
-    if (swaggerUiPath && existsSync(swaggerUiPath)) {
-      await fastifyInstance.register(fastifyStatic as any, {
-        root: swaggerUiPath,
-        prefix: '/docs/',
-      });
-    }
-
-    // Setup Swagger after static files are registered
-    SwaggerModule.setup('/docs', app, document, {
-      customSiteTitle: 'tracked-lms API Docs',
-    });
+    SwaggerModule.setup('/docs', app, document);
   }
 
   await app.listen({ port: env.API_PORT, host: '0.0.0.0' });
