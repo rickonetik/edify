@@ -30,7 +30,6 @@ async function bootstrap() {
   if (env.NODE_ENV !== 'production') {
     // Register static files for Swagger UI (required for Fastify)
     const fastifyInstance = app.getHttpAdapter().getInstance();
-    const require = createRequire(import.meta.url);
 
     // Find swagger-ui-dist in pnpm structure
     let swaggerUiPath: string | undefined;
