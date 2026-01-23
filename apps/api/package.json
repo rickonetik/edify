@@ -1,0 +1,15 @@
+{
+  "name": "@tracked/api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch dist/main.js",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@tracked/shared": "workspace:*"
+  }
+}

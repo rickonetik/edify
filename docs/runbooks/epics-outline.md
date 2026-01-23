@@ -170,4 +170,38 @@
 **Git:**
 
 - Ветка: `chore/monorepo-scaffold`
+- Коммит: `4d0edda chore: Docker Compose (Postgres/Redis/MinIO) + runbook (Story 0.4)`
+- История: четыре коммита (0.1 → 0.2 → 0.3 → 0.4)
+
+### 0.5 Unified env & runtime validation (shared)
+
+**Status:** ✅ Completed  
+**PR:** chore/env-validation-unify
+
+**Выполнено:**
+
+- Добавлен zod в `packages/shared/package.json` (dependencies: zod ^3.23.0)
+- Создана структура env в `packages/shared/src/env/`:
+  - `schemas.ts`: ApiEnvSchema, BotEnvSchema, WebappEnvSchema
+  - `validate.ts`: validateOrThrow с маскировкой секретов
+  - `index.ts`: экспорт схем и функций
+- Обновлён `packages/shared/src/index.ts`: экспорт env модуля
+- Обновлён `apps/api/src/main.ts`: валидация ApiEnvSchema на старте
+- Обновлён `apps/bot/src/index.ts`: валидация BotEnvSchema на старте (BOT_TOKEN required)
+- Создан `apps/webapp/src/shared/env/env.ts`: безопасная валидация для webapp (safeParse)
+- Обновлён `.env.example`: добавлены DATABASE_URL, REDIS_URL, S3 переменные, BOT_TOKEN
+- Восстановлены `tsconfig.json` файлы для shared, api, bot
+- Восстановлен `tsconfig.base.json` в корне
+- Добавлены зависимости `@tracked/shared` в apps/api и apps/bot
+
+**Проверено:**
+
+- ✅ Bot падает без BOT_TOKEN с понятной ошибкой
+- ✅ Bot стартует с BOT_TOKEN
+- ✅ API стартует и выводит "env ok" (без секретов)
+- ✅ Webapp env слой создан (safeParse, не ломает build)
+
+**Git:**
+
+- Ветка: `chore/monorepo-scaffold`
 - Коммит: готов к созданию (вместе с обновлением epics-outline.md)
