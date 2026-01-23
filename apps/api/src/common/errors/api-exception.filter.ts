@@ -72,6 +72,7 @@ export class ApiExceptionFilter implements ExceptionFilter {
       ...(details !== undefined && { details }),
     };
 
-    response.status(statusCode).json(errorResponse);
+    // Fastify reply API
+    response.code(statusCode).send(errorResponse);
   }
 }
