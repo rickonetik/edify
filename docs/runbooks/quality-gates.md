@@ -39,11 +39,11 @@ Runs all automated quality gates:
 
 1. **Workspace** - Verifies all packages are recognized
 2. **Deep Imports** - Checks for forbidden `@tracked/shared/src/*` imports
-3. **Build** - Ensures all packages build successfully (must run before typecheck for dependencies)
-4. **Lint** - Runs ESLint across the repository
-5. **Typecheck** - Validates TypeScript types (requires dependencies to be built)
+3. **Lint** - Runs ESLint across the repository
+4. **Typecheck** - Validates TypeScript types (uses TS project references, no build required)
+5. **Build** - Ensures all packages build successfully
 
-**Note**: Typecheck currently relies on build artifacts (temporary compromise for Foundation stage). Preferred future: TS project references / path mapping to source for typecheck without build.
+**Note**: Typecheck uses TypeScript project references and does not depend on build artifacts. Dependencies are type-checked from source via `tsconfig.json` references.
 
 ### Individual Checks
 

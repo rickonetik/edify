@@ -2,3 +2,5 @@
 > @tracked/bot@ build /Users/user/Project/edify_main/apps/bot
 > tsc -p tsconfig.json
 
+tsconfig.json(9,18): error TS6306: Referenced project '/Users/user/Project/edify_main/packages/shared' must have setting "composite": true.
+ ELIFECYCLE  Command failed with exit code 2.
