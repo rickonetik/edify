@@ -7,10 +7,6 @@ import { AppModule } from './app.module.js';
 import { createPinoLogger } from './common/logging/pino.js';
 import { RequestIdInterceptor } from './common/request-id/request-id.interceptor.js';
 import { ApiExceptionFilter } from './common/errors/api-exception.filter.js';
-import fastifyStatic from '@fastify/static';
-import { join } from 'node:path';
-import { existsSync } from 'node:fs';
-import { readdirSync } from 'node:fs';
 
 async function bootstrap() {
   const env = validateOrThrow(ApiEnvSchema, process.env);
