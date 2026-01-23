@@ -2,16 +2,6 @@
 
 <!-- Describe your changes in detail -->
 
-## Definition of Stable (EPIC 1+)
-
-**REQUIRED**: All three checks must pass before PR is considered ready for review.
-
-- [ ] `pnpm verify` PASS
-- [ ] `pnpm test:foundation` PASS
-- [ ] `pnpm audit:architecture` PASS
-
-**Note**: If any of these checks fail, the PR is NOT ready for review, even if the feature/UI looks good.
-
 ## Type of Change
 
 - [ ] Feature (new functionality)
