@@ -13,7 +13,8 @@ async function bootstrap() {
 
   const logger = createPinoLogger(env.NODE_ENV);
 
-  const adapter = new FastifyAdapter({ logger });
+  // Enable ignoreTrailingSlash to handle both /docs and /docs/ routes
+  const adapter = new FastifyAdapter({ logger, ignoreTrailingSlash: true });
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, adapter, {
     bufferLogs: false,
   });
