@@ -196,6 +196,132 @@ function verifyBuild() {
   return runCommand('pnpm -w build', 'Build');
 }
 
+function verifyNoDuplicateErrorCodes() {
+  log('\n🚫 Checking for duplicate error codes in apps...', colors.blue);
+
+  const patterns = [
+    'export enum ErrorCodes',
+    'VALIDATION_ERROR',
+    'INTERNAL_ERROR',
+    'NOT_FOUND',
+    'UNAUTHORIZED',
+    'FORBIDDEN',
+    'CONFLICT',
+    'RATE_LIMITED',
+  ];
+
+  let command;
+  let tool;
+
+  if (checkCommandExists('rg')) {
+    tool = 'ripgrep (rg)';
+    // Search for error code definitions in apps, excluding imports
+    const pattern = patterns.map((p) => `"${p}"`).join('|');
+    command = `rg "${pattern}" -n apps --glob '!**/node_modules/**' --glob '!**/dist/**' -t ts -t tsx`;
+  } else if (checkCommandExists('grep')) {
+    tool = 'grep';
+    const pattern = patterns.join('\\|');
+    command = `grep -R "${pattern}" apps --include='*.ts' --include='*.tsx' --exclude-dir=node_modules --exclude-dir=dist -n`;
+  } else {
+    error('Neither ripgrep (rg) nor grep found. Please install ripgrep: brew install ripgrep');
+    process.exit(1);
+  }
+
+  try {
+    info(`Using ${tool} to check for duplicate error codes in apps`);
+    const output = execSync(command, { encoding: 'utf-8', stdio: 'pipe' });
+    const matches = output.trim();
+
+    if (matches) {
+      // Filter out imports from @tracked/shared (these are allowed)
+      const lines = matches.split('\n').filter((line) => {
+        const trimmed = line.trim();
+        // Skip lines that are imports
+        if (
+          trimmed.includes("from '@tracked/shared'") ||
+          trimmed.includes('from "@tracked/shared"') ||
+          trimmed.includes("import {") ||
+          trimmed.startsWith('//') ||
+          trimmed.startsWith('*')
+        ) {
+          return false;
+        }
+        // Check if it's a definition (export enum, const, etc.)
+        return (
+          trimmed.includes('export enum') ||
+          trimmed.includes('export const') ||
+          trimmed.includes('= VALIDATION_ERROR') ||
+          trimmed.includes('= INTERNAL_ERROR')
+        );
+      });
+
+      if (lines.length > 0) {
+        error('Duplicate error codes found in apps (should only be in @tracked/shared):');
+        console.log(lines.join('\n'));
+        error('\nError codes must be defined only in @tracked/shared. Import from @tracked/shared instead.');
+        return false;
+      }
+    }
+
+    success('No duplicate error codes found');
+    return true;
+  } catch (err) {
+    // grep/rg exit code 1 means "no matches" - that's success
+    if (err.status === 1) {
+      success('No duplicate error codes found');
+      return true;
+    }
+    // Other errors are real problems
+    error(`Failed to check duplicate error codes: ${err.message}`);
+    return false;
+  }
+}
+
+function verifyNoManualErrorFormat() {
+  log('\n🚫 Checking for manual error format in API controllers...', colors.blue);
+
+  const pattern = 'statusCode"\\s*:';
+  let command;
+  let tool;
+
+  if (checkCommandExists('rg')) {
+    tool = 'ripgrep (rg)';
+    // Search in API source, exclude error filter (it's allowed to format errors)
+    command = `rg "${pattern}" -n apps/api/src --glob '!**/node_modules/**' --glob '!**/dist/**' --glob '!**/errors/**' -t ts`;
+  } else if (checkCommandExists('grep')) {
+    tool = 'grep';
+    command = `grep -R "${pattern}" apps/api/src --include='*.ts' --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=errors -n`;
+  } else {
+    error('Neither ripgrep (rg) nor grep found. Please install ripgrep: brew install ripgrep');
+    process.exit(1);
+  }
+
+  try {
+    info(`Using ${tool} to check for manual error format in API controllers`);
+    const output = execSync(command, { encoding: 'utf-8', stdio: 'pipe' });
+    const matches = output.trim();
+
+    if (matches) {
+      error('Manual error format found in controllers (should use centralized error filter):');
+      console.log(matches);
+      error('\nAll errors must go through ApiExceptionFilter. Do not format errors manually in controllers.');
+      return false;
+    }
+
+    success('No manual error format found');
+    return true;
+  } catch (err) {
+    // grep/rg exit code 1 means "no matches" - that's success
+    if (err.status === 1) {
+      success('No manual error format found');
+      return true;
+    }
+    // Other errors are real problems
+    error(`Failed to check manual error format: ${err.message}`);
+    return false;
+  }
+}
+
 // Main execution
 function main() {
   log('\n🚀 Quality Gates Verification\n', colors.blue);
@@ -204,6 +330,8 @@ function main() {
     { name: 'Workspace', fn: verifyWorkspace },
     { name: 'Deep Imports', fn: verifyDeepImports },
     { name: 'Wildcard Paths', fn: verifyNoWildcardPaths },
+    { name: 'Duplicate Error Codes', fn: verifyNoDuplicateErrorCodes },
+    { name: 'Manual Error Format', fn: verifyNoManualErrorFormat },
     { name: 'Lint', fn: verifyLint },
     { name: 'Typecheck', fn: verifyTypecheck },
     { name: 'Build', fn: verifyBuild },

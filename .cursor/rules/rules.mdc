@@ -71,6 +71,48 @@ Never duplicate enums/DTOs/error codes in apps.
 
 **TypeScript Paths Rule**: Do not add tsconfig paths for `@tracked/shared/*` or any deep paths. Only `@tracked/shared` root mapping is allowed. Wildcard paths are forbidden and will break typecheck without build.
 
+## Architecture Rules (EPIC 1+)
+
+### No Premature Abstraction
+
+**Critical**: Do not introduce DI containers, layers, repositories, or factories "for future use" unless the Story explicitly requires them.
+
+- One domain = one module (API) and one feature (WebApp)
+- No "core/common domain services" until there are at least 2 real reuse cases
+- Keep it simple: implement what's needed now, not what might be needed later
+
+### Anti-Duplication: Single Source of Truth
+
+All DTO/contracts/errors/env must come from `@tracked/shared`:
+
+- In apps: import from `@tracked/shared`
+- Do NOT copy enums, error codes, or response types
+- Do NOT define `ErrorCodes` or `ApiErrorResponse` in apps
+- Do NOT format errors manually in controllers (use `ApiExceptionFilter`)
+
+### WebApp Structure Minimization
+
+Until EPIC 1-2:
+
+- Do NOT add separate "layers" like `domain/`, `services/`, `repositories/`
+- Keep structure:
+  - `src/app` (router/layout)
+  - `src/pages`
+  - `src/shared` (ui/theme/telegram/env/api later)
+- `src/features` will appear only when real features exist (Learning/Library/Account)
+
+### Architectural Check Commands
+
+Before PR merge, run these and include output:
+
+```bash
+pnpm verify
+rg "@tracked/shared/src" -n || true
+rg "@tracked/shared/\\*" -n tsconfig*.json apps/**/tsconfig*.json packages/**/tsconfig*.json || true
+rg "export enum ErrorCodes|VALIDATION_ERROR|INTERNAL_ERROR" apps -n || true
+rg "statusCode\"\\s*:" apps/api/src -n || true
+```
+
 ## Dependencies Policy (Strict)
 - Do NOT add new libraries unless the Story explicitly says so.
 - Prefer existing dependencies already in the repo.
