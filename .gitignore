@@ -3,7 +3,9 @@ node_modules/
 dist/
 **/dist/
 .env
+# Turbo cache/logs (local-only)
 .turbo/
+apps/**/.turbo/
 coverage/
 .DS_Store
 *.log

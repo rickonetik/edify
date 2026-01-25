@@ -1,4 +1,0 @@
-
-> @tracked/shared@ build /Users/user/Project/edify_main/packages/shared
-> tsc -p tsconfig.json
-
