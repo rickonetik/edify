@@ -66,12 +66,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           <div
             style={{
               position: 'fixed',
-              top: 'calc(56px + var(--safe-top, 0px) + var(--sp-4))',
+              top: 'calc(56px + var(--safe-top, 0px) + var(--sp-3))',
               left: '50%',
               transform: 'translateX(-50%)',
-              zIndex: 9999,
-              width: '100%',
-              maxWidth: '400px',
+              zIndex: 1000,
+              width: 'min(360px, calc(100vw - (var(--sp-4) * 2)))',
+              pointerEvents: 'none',
+              willChange: 'transform, opacity',
+              animation: 'toastSlideDown 0.3s ease-out',
             }}
           >
             <div
@@ -83,7 +85,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 'var(--sp-1)',
-                animation: 'slideDown 0.3s ease-out',
+                pointerEvents: 'auto',
               }}
             >
               <div
@@ -106,10 +108,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               )}
             </div>
             <style>{`
-              @keyframes slideDown {
+              @keyframes toastSlideDown {
                 from {
                   opacity: 0;
-                  transform: translateX(-50%) translateY(-10px);
+                  transform: translateX(-50%) translateY(-6px);
                 }
                 to {
                   opacity: 1;
