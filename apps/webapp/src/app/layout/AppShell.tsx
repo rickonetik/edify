@@ -137,9 +137,11 @@ export function AppShell() {
           overflowY: 'auto',
           overflowX: 'hidden',
           WebkitOverflowScrolling: 'touch',
-          backgroundColor: 'var(--surface)',
+          background: 'linear-gradient(180deg, var(--app-bg-1) 0%, var(--app-bg-2) 100%)',
           backgroundAttachment: 'local',
           contain: 'paint',
+          minHeight: '100%',
+          width: '100%',
           paddingTop: 'calc(56px + var(--safe-top, 0px))',
           paddingBottom: 'calc(60px + var(--safe-bottom, 0px))',
         }}
