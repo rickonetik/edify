@@ -331,15 +331,8 @@ function StatsRow() {
 
 // Actions List Component
 function ActionsList() {
+  const navigate = useNavigate();
   const toast = useToast();
-
-  const handleAction = (title: string) => {
-    toast.show({
-      title: 'Скоро',
-      message: `${title} будет доступно в следующей версии`,
-      variant: 'info',
-    });
-  };
 
   return (
     <div>
@@ -347,19 +340,25 @@ function ActionsList() {
         title="Стать экспертом"
         subtitle="Создавайте курсы и зарабатывайте"
         right="›"
-        onClick={() => handleAction('Стать экспертом')}
+        onClick={() => navigate('/creator/onboarding')}
       />
       <ListItem
         title="Поддержка"
         subtitle="Помощь и обратная связь"
         right="›"
-        onClick={() => handleAction('Поддержка')}
+        onClick={() => {
+          toast.show({
+            title: 'Скоро',
+            message: 'Поддержка будет доступна в следующей версии',
+            variant: 'info',
+          });
+        }}
       />
       <ListItem
         title="Язык"
         subtitle="Русский (RU)"
         right="›"
-        onClick={() => handleAction('Язык')}
+        onClick={() => navigate('/settings')}
       />
     </div>
   );

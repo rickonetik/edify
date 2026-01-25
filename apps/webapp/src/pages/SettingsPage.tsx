@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Card,
   CardHeader,
@@ -8,16 +8,15 @@ import {
   Button,
 } from '../shared/ui/index.js';
 
-export function CourseDetailPage() {
-  const { id } = useParams<{ id: string }>();
+export function SettingsPage() {
   const navigate = useNavigate();
 
   return (
     <div style={{ padding: 'var(--sp-4)' }}>
       <Card>
         <CardHeader>
-          <CardTitle>Курс #{id}</CardTitle>
-          <CardDescription>Страница курса в разработке</CardDescription>
+          <CardTitle>Настройки</CardTitle>
+          <CardDescription>Настройки будут доступны позже</CardDescription>
         </CardHeader>
         <CardContent>
           <div
@@ -31,8 +30,8 @@ export function CourseDetailPage() {
             <Button variant="secondary" onClick={() => navigate(-1)}>
               Назад
             </Button>
-            <Button variant="primary" onClick={() => navigate('/learn')}>
-              К обучению
+            <Button variant="primary" onClick={() => navigate('/account')}>
+              К аккаунту
             </Button>
           </div>
         </CardContent>
