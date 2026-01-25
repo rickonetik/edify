@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Card,
   CardHeader,
@@ -8,16 +8,15 @@ import {
   Button,
 } from '../shared/ui/index.js';
 
-export function CourseDetailPage() {
-  const { id } = useParams<{ id: string }>();
+export function NotFoundPage() {
   const navigate = useNavigate();
 
   return (
     <div style={{ padding: 'var(--sp-4)' }}>
       <Card>
         <CardHeader>
-          <CardTitle>Курс #{id}</CardTitle>
-          <CardDescription>Страница курса в разработке</CardDescription>
+          <CardTitle>Страница не найдена</CardTitle>
+          <CardDescription>Запрашиваемая страница не существует</CardDescription>
         </CardHeader>
         <CardContent>
           <div
@@ -28,11 +27,8 @@ export function CourseDetailPage() {
               marginTop: 'var(--sp-4)',
             }}
           >
-            <Button variant="secondary" onClick={() => navigate(-1)}>
-              Назад
-            </Button>
             <Button variant="primary" onClick={() => navigate('/learn')}>
-              К обучению
+              На обучение
             </Button>
           </div>
         </CardContent>

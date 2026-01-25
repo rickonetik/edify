@@ -8,7 +8,7 @@ import {
   Button,
 } from '../shared/ui/index.js';
 
-export function CourseDetailPage() {
+export function UpdatePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
@@ -16,8 +16,8 @@ export function CourseDetailPage() {
     <div style={{ padding: 'var(--sp-4)' }}>
       <Card>
         <CardHeader>
-          <CardTitle>Курс #{id}</CardTitle>
-          <CardDescription>Страница курса в разработке</CardDescription>
+          <CardTitle>Обновление #{id}</CardTitle>
+          <CardDescription>Новость/обновление в разработке</CardDescription>
         </CardHeader>
         <CardContent>
           <div
@@ -31,8 +31,8 @@ export function CourseDetailPage() {
             <Button variant="secondary" onClick={() => navigate(-1)}>
               Назад
             </Button>
-            <Button variant="primary" onClick={() => navigate('/learn')}>
-              К обучению
+            <Button variant="primary" onClick={() => navigate('/library')}>
+              К библиотеке
             </Button>
           </div>
         </CardContent>

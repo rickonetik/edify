@@ -369,64 +369,66 @@ function RecommendedCourseCard({ course }: { course: Course }) {
 // News Card Component
 function NewsCard({ news }: { news: News }) {
   return (
-    <Card
-      style={{
-        marginBottom: 'var(--sp-3)',
-        padding: 'var(--sp-4)',
-      }}
-    >
-      <div
+    <Link to={`/update/${news.id}`} style={{ textDecoration: 'none', display: 'block' }}>
+      <Card
         style={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          gap: 'var(--sp-3)',
+          marginBottom: 'var(--sp-3)',
+          padding: 'var(--sp-4)',
         }}
       >
         <div
           style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: 'var(--r-md)',
-            backgroundColor: 'var(--accent)',
-            opacity: 0.2,
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
+            alignItems: 'flex-start',
+            gap: 'var(--sp-3)',
           }}
         >
           <div
             style={{
-              width: '20px',
-              height: '20px',
-              borderRadius: '50%',
+              width: '32px',
+              height: '32px',
+              borderRadius: 'var(--r-md)',
               backgroundColor: 'var(--accent)',
-              opacity: 0.5,
-            }}
-          />
-        </div>
-        <div style={{ flex: 1 }}>
-          <div
-            style={{
-              fontSize: 'var(--text-md)',
-              fontWeight: 'var(--font-weight-semibold)',
-              color: 'var(--fg)',
-              marginBottom: 'var(--sp-2)',
+              opacity: 0.2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
             }}
           >
-            {news.title}
+            <div
+              style={{
+                width: '20px',
+                height: '20px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--accent)',
+                opacity: 0.5,
+              }}
+            />
           </div>
-          <div
-            style={{
-              fontSize: 'var(--text-sm)',
-              color: 'var(--muted-fg)',
-            }}
-          >
-            {news.desc}
+          <div style={{ flex: 1 }}>
+            <div
+              style={{
+                fontSize: 'var(--text-md)',
+                fontWeight: 'var(--font-weight-semibold)',
+                color: 'var(--fg)',
+                marginBottom: 'var(--sp-2)',
+              }}
+            >
+              {news.title}
+            </div>
+            <div
+              style={{
+                fontSize: 'var(--text-sm)',
+                color: 'var(--muted-fg)',
+              }}
+            >
+              {news.desc}
+            </div>
           </div>
         </div>
-      </div>
-    </Card>
+      </Card>
+    </Link>
   );
 }
 

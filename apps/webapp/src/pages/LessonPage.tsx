@@ -8,16 +8,16 @@ import {
   Button,
 } from '../shared/ui/index.js';
 
-export function CourseDetailPage() {
-  const { id } = useParams<{ id: string }>();
+export function LessonPage() {
+  const { lessonId } = useParams<{ lessonId: string }>();
   const navigate = useNavigate();
 
   return (
     <div style={{ padding: 'var(--sp-4)' }}>
       <Card>
         <CardHeader>
-          <CardTitle>Курс #{id}</CardTitle>
-          <CardDescription>Страница курса в разработке</CardDescription>
+          <CardTitle>Урок #{lessonId}</CardTitle>
+          <CardDescription>Урок в разработке</CardDescription>
         </CardHeader>
         <CardContent>
           <div
