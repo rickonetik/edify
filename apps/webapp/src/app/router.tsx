@@ -5,6 +5,7 @@ import { LibraryPage } from '../pages/LibraryPage.js';
 import { LearnPage } from '../pages/LearnPage.js';
 import { AccountPage } from '../pages/AccountPage.js';
 import { CourseDetailPage } from '../pages/CourseDetailPage.js';
+import { UiPreviewPage } from '../pages/UiPreviewPage.js';
 
 export const router = createBrowserRouter([
   {
@@ -16,6 +17,7 @@ export const router = createBrowserRouter([
       { path: 'learn', element: <LearnPage /> },
       { path: 'account', element: <AccountPage /> },
       { path: 'course/:id', element: <CourseDetailPage /> },
+      { path: 'ui-preview', element: <UiPreviewPage /> },
     ],
   },
 ]);
