@@ -8,6 +8,7 @@ import {
   ListItem,
   useToast,
 } from '../shared/ui/index.js';
+import { useMe } from '../shared/query/index.js';
 
 // Mock data
 const mockProfile = {
@@ -100,8 +101,10 @@ function AvatarPlaceholder() {
   );
 }
 
-// Profile Card Component
-function ProfileCard() {
+// Profile Card Component (name/handle from useMe when available, else mock)
+function ProfileCard({ name, handle }: { name?: string; handle?: string } = {}) {
+  const displayName = name ?? mockProfile.name;
+  const displayHandle = handle ?? mockProfile.handle;
   return (
     <Card style={{ padding: 'var(--sp-4)', marginBottom: 'var(--sp-4)' }}>
       <div
@@ -121,7 +124,7 @@ function ProfileCard() {
               marginBottom: 'var(--sp-1)',
             }}
           >
-            {mockProfile.name}
+            {displayName}
           </div>
           <div
             style={{
@@ -130,7 +133,7 @@ function ProfileCard() {
               marginBottom: 'var(--sp-2)',
             }}
           >
-            {mockProfile.handle}
+            {displayHandle}
           </div>
           <div
             style={{
@@ -388,6 +391,9 @@ export function AccountPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const state = searchParams.get('state') || 'default';
+  const { data: me } = useMe();
+  const profileName = me?.name ?? mockProfile.name;
+  const profileHandle = me?.handle ?? mockProfile.handle;
 
   // Loading state
   if (state === 'loading') {
@@ -429,7 +435,7 @@ export function AccountPage() {
   // Default state
   return (
     <div style={{ padding: 'var(--sp-4)' }}>
-      <ProfileCard />
+      <ProfileCard name={profileName} handle={profileHandle} />
 
       {/* Referral Card */}
       <ReferralCard />
