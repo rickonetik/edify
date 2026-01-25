@@ -87,7 +87,7 @@ function verifyDeepImports() {
   if (checkCommandExists('rg')) {
     tool = 'ripgrep (rg)';
     // Only check TS/JS files, exclude docs, comments, and build artifacts
-    command = `rg "${pattern}" -n -t ts -t tsx -t js -t jsx --glob '!**/*.md' --glob '!**/*.mdc' --glob '!**/node_modules/**' --glob '!**/dist/**' --glob '!**/.turbo/**'`;
+    command = `rg "${pattern}" -n --glob '**/*.ts' --glob '**/*.tsx' --glob '**/*.js' --glob '**/*.jsx' --glob '!**/*.md' --glob '!**/*.mdc' --glob '!**/node_modules/**' --glob '!**/dist/**' --glob '!**/.turbo/**'`;
   } else if (checkCommandExists('grep')) {
     tool = 'grep';
     command = `grep -R "${pattern}" . --include='*.ts' --include='*.tsx' --include='*.js' --include='*.jsx' --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=.turbo --exclude-dir=.git -n`;
@@ -277,8 +277,8 @@ function verifyNoDuplicateErrorCodes() {
   if (checkCommandExists('rg')) {
     tool = 'ripgrep (rg)';
     // Search for error code definitions in apps, excluding imports
-    const pattern = patterns.map((p) => `"${p}"`).join('|');
-    command = `rg "${pattern}" -n apps --glob '!**/node_modules/**' --glob '!**/dist/**' -t ts -t tsx`;
+    const pattern = patterns.join('|');
+    command = `rg "${pattern}" -n apps --glob '**/*.ts' --glob '**/*.tsx' --glob '!**/node_modules/**' --glob '!**/dist/**'`;
   } else if (checkCommandExists('grep')) {
     tool = 'grep';
     const pattern = patterns.join('\\|');

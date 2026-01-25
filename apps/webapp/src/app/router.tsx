@@ -4,6 +4,7 @@ import { AppShell } from './layout/AppShell.js';
 import { LibraryPage } from '../pages/LibraryPage.js';
 import { LearnPage } from '../pages/LearnPage.js';
 import { AccountPage } from '../pages/AccountPage.js';
+import { CourseDetailPage } from '../pages/CourseDetailPage.js';
 
 export const router = createBrowserRouter([
   {
@@ -14,6 +15,7 @@ export const router = createBrowserRouter([
       { path: 'library', element: <LibraryPage /> },
       { path: 'learn', element: <LearnPage /> },
       { path: 'account', element: <AccountPage /> },
+      { path: 'course/:id', element: <CourseDetailPage /> },
     ],
   },
 ]);
