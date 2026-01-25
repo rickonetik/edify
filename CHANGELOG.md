@@ -2,6 +2,75 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.2] - 2026-01-25 - WebApp UI Foundation (EPIC 1)
+
+### Added
+
+#### WebApp UI Kit (Story 1.3)
+
+- **UI Components**
+  - Button component with variants (primary, secondary, ghost, danger) and sizes
+  - Card component with CardHeader, CardTitle, CardDescription, CardContent
+  - Input component with label, hint, and error states
+  - ListItem component for navigation and actions
+  - Skeleton component for loading states
+  - EmptyState and ErrorState components for feedback
+  - Toast notification system with useToast hook
+  - Modal component for dialogs
+
+#### WebApp Pages & Features
+
+- **Learn Page (Story 1.4)**
+  - Current course card with progress circle
+  - Next lesson card
+  - Continue learning section with progress bars
+  - My courses horizontal scroll section
+  - News section
+  - Loading/empty/error states via query params
+
+- **Library Page (Story 1.5)**
+  - Catalog courses section (vertical list)
+  - Recommendations section (horizontal scroll)
+  - News section
+  - Local search functionality with filtering
+  - Mock data for courses and news
+  - Loading/empty/error states via query params
+
+- **Account Page (Story 1.6)**
+  - Profile card with avatar, name, handle, status badge
+  - Referral card with code, link, and copy to clipboard
+  - Stats row with progress, streak, and points metrics
+  - Actions list with navigation
+  - Copy to clipboard with fallback support
+  - Loading/empty/error states via query params
+
+- **Stub Screens (Story 1.7)**
+  - CourseDetailPage, LessonPage, UpdatePage
+  - SettingsPage, CreatorOnboardingPage
+  - NotFoundPage for 404 fallback
+  - Unified stub page UI pattern
+  - All routes properly configured
+
+#### UI Improvements
+
+- **Toast Component**
+  - Fixed positioning and animation (centered, no left shift)
+  - Proper willChange optimization
+  - Responsive width calculation
+
+- **Navigation**
+  - Removed headers from Library and Account pages
+  - All actions navigate to proper routes instead of toast
+  - News items in Library are clickable
+
+### Technical Details
+
+- All components use design tokens (--sp-_, --text-_, --fg, --muted-fg, etc.)
+- No inline "magic" colors
+- Scroll restoration preserved
+- All routes work without 404 errors
+- Consistent UI patterns across all pages
+
 ## [0.1.0] - 2024 - Foundation (EPIC 0)
 
 ### Added
