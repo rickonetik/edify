@@ -526,27 +526,6 @@ export function LibraryPage() {
   // Default state
   return (
     <div style={{ padding: 'var(--sp-4)' }}>
-      {/* Header */}
-      <h1
-        style={{
-          fontSize: 'var(--text-xl)',
-          fontWeight: 'var(--font-weight-semibold)',
-          color: 'var(--fg)',
-          margin: '0 0 var(--sp-2) 0',
-        }}
-      >
-        Edify
-      </h1>
-      <p
-        style={{
-          fontSize: 'var(--text-sm)',
-          color: 'var(--muted-fg)',
-          margin: '0 0 var(--sp-4) 0',
-        }}
-      >
-        Каталог курсов и материалов для обучения
-      </p>
-
       {/* Search Input */}
       <div
         style={{
