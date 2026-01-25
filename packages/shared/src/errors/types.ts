@@ -1,8 +1,8 @@
-import { ErrorCode } from './codes.js';
+import { ApiErrorCode } from './codes.js';
 
 export interface ApiErrorResponse {
   statusCode: number;
-  code: ErrorCode;
+  code: ApiErrorCode;
   message: string;
   traceId: string;
   details?: unknown;
