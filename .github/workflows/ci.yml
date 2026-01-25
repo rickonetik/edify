@@ -20,11 +20,14 @@ jobs:
           node-version: 20
           cache: 'pnpm'
 
-      - name: Enable corepack
+      - name: Enable Corepack
         run: corepack enable
 
+      - name: Activate pnpm
+        run: corepack prepare pnpm@9.15.4 --activate
+
       - name: Install deps
-        run: pnpm i --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Sanity check (workspace packages)
         run: pnpm -r list --depth 0
