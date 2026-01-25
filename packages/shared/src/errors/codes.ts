@@ -8,4 +8,4 @@ export const ErrorCodes = {
   RATE_LIMITED: 'RATE_LIMITED',
 } as const;
 
-export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
+export type ApiErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
