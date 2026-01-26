@@ -32,11 +32,13 @@ const isDbDisabled = skipDb || !hasDatabaseUrl;
           // Return null when DB is disabled
           return null;
         }
-        if (!env.DATABASE_URL) {
+        // Use env.DATABASE_URL if available, otherwise fallback to process.env.DATABASE_URL
+        const databaseUrl = env.DATABASE_URL || process.env.DATABASE_URL;
+        if (!databaseUrl) {
           throw new Error('DATABASE_URL is required when SKIP_DB is not set');
         }
         return new Pool({
-          connectionString: env.DATABASE_URL,
+          connectionString: databaseUrl,
           connectionTimeoutMillis: 3000, // Fail-fast: 3 seconds
         });
       },
