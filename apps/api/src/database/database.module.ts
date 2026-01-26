@@ -4,6 +4,9 @@ import { ApiEnvSchema, validateOrThrow } from '@tracked/shared';
 
 // Allow DATABASE_URL to be optional when SKIP_DB=1
 const skipDb = process.env.SKIP_DB === '1';
+const hasDatabaseUrl = !!process.env.DATABASE_URL;
+const isDbDisabled = skipDb || !hasDatabaseUrl;
+
 let env;
 try {
   env = validateOrThrow(ApiEnvSchema, process.env);
@@ -42,10 +45,9 @@ export class DatabaseModule implements OnModuleInit, OnModuleDestroy {
   constructor(@Optional() private readonly pool: Pool | null) {}
 
   async onModuleInit() {
-    if (skipDb || !this.pool) {
-      console.warn(
-        '⚠️  Database is disabled (SKIP_DB=1 or DATABASE_URL not set). DB-dependent endpoints will fail.',
-      );
+    if (isDbDisabled || !this.pool) {
+      const reason = skipDb ? 'SKIP_DB=1' : 'DATABASE_URL not set';
+      console.warn(`⚠️  Database is disabled (${reason}). DB-dependent endpoints will fail.`);
       return;
     }
 
