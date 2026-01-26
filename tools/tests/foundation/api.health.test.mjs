@@ -2,7 +2,7 @@
 
 /**
  * Foundation Smoke Test: API Health Endpoint
- * Tests: /health response format, x-request-id header, traceId
+ * Tests: /health response format, x-request-id header, requestId
  * 
  * This test is deterministic: it builds and starts the API itself,
  * waits for the port to be available, and cleans up after itself.

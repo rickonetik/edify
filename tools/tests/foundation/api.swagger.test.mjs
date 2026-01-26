@@ -169,7 +169,7 @@ test('GET /docs returns 404 with error format in production mode', async () => {
     const body = await response.json();
     
     // Check unified error format
-    if (!body.statusCode || !body.code || !body.message || !body.traceId) {
+    if (!body.statusCode || !body.code || !body.message || !body.requestId) {
       throw new Error(`Invalid error response format: ${JSON.stringify(body)}`);
     }
 

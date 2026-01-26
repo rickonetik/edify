@@ -2,7 +2,7 @@
 
 /**
  * Foundation Smoke Test: API Error Format
- * Tests: 404 error format, 400 validation error format, traceId consistency
+ * Tests: 404 error format, 400 validation error format, requestId consistency
  * 
  * This test is deterministic: it builds and starts the API itself,
  * waits for the port to be available, and cleans up after itself.
@@ -144,7 +144,7 @@ test('GET /nope returns 404 with unified error format', async () => {
   const body = await response.json();
   
   // Check unified error format
-  if (!body.statusCode || !body.code || !body.message || !body.traceId) {
+  if (!body.statusCode || !body.code || !body.message || !body.requestId) {
     throw new Error(`Invalid error response format: ${JSON.stringify(body)}`);
   }
 
@@ -162,9 +162,9 @@ test('GET /nope returns 404 with unified error format', async () => {
     throw new Error('Missing x-request-id header');
   }
 
-  // traceId should match x-request-id
-  if (body.traceId !== requestId) {
-    throw new Error(`traceId (${body.traceId}) does not match x-request-id (${requestId})`);
+  // requestId should match x-request-id
+  if (body.requestId !== requestId) {
+    throw new Error(`requestId (${body.requestId}) does not match x-request-id (${requestId})`);
   }
 });
 
@@ -178,7 +178,7 @@ test('GET /health/400 returns 400 with validation error format', async () => {
   const body = await response.json();
   
   // Check unified error format
-  if (!body.statusCode || !body.code || !body.message || !body.traceId) {
+  if (!body.statusCode || !body.code || !body.message || !body.requestId) {
     throw new Error(`Invalid error response format: ${JSON.stringify(body)}`);
   }
 
@@ -201,8 +201,8 @@ test('GET /health/400 returns 400 with validation error format', async () => {
     throw new Error('Missing x-request-id header');
   }
 
-  // traceId should match x-request-id
-  if (body.traceId !== requestId) {
-    throw new Error(`traceId (${body.traceId}) does not match x-request-id (${requestId})`);
+  // requestId should match x-request-id
+  if (body.requestId !== requestId) {
+    throw new Error(`requestId (${body.requestId}) does not match x-request-id (${requestId})`);
   }
 });
