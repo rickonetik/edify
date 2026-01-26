@@ -27,6 +27,9 @@ export type {
   GetLessonResponseV1,
 } from './endpoints.js';
 
+// Auth types
+export type { AuthTelegramRequestV1, AuthTelegramResponseV1 } from './auth.js';
+
 // Zod schemas (for runtime validation)
 export {
   UserV1Schema,
@@ -41,4 +44,6 @@ export {
   GetLearnSummaryResponseV1Schema,
   GetCourseResponseV1Schema,
   GetLessonResponseV1Schema,
+  AuthTelegramRequestV1Schema,
+  AuthTelegramResponseV1Schema,
 } from './schemas.js';

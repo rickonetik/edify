@@ -70,6 +70,12 @@ async function startApi(env = {}) {
     if (!processEnv.NODE_ENV) {
       processEnv.NODE_ENV = 'development'; // Default to development for tests
     }
+    
+    // Use TELEGRAM_BOT_TOKEN from process.env (set in .env or CI secrets)
+    // If not set, use test token (for local development without .env)
+    if (!processEnv.TELEGRAM_BOT_TOKEN) {
+      processEnv.TELEGRAM_BOT_TOKEN = '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11';
+    }
 
     apiProcess = spawn('pnpm', ['--filter', '@tracked/api', 'start'], {
       cwd,

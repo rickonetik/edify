@@ -17,3 +17,4 @@ export {
   GetCourseResponseV1Schema,
   GetLessonResponseV1Schema,
 } from './endpoints.js';
+export { AuthTelegramRequestV1Schema, AuthTelegramResponseV1Schema } from './auth.js';

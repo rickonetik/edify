@@ -63,10 +63,17 @@ async function startApi() {
       reject(new Error(`API startup timeout after ${STARTUP_TIMEOUT}ms`));
     }, STARTUP_TIMEOUT);
 
+    // Use TELEGRAM_BOT_TOKEN from process.env (set in .env or CI secrets)
+    // If not set, use test token (for local development without .env)
+    const processEnv = { ...process.env, API_PORT: String(API_PORT), NODE_ENV: 'development' };
+    if (!processEnv.TELEGRAM_BOT_TOKEN) {
+      processEnv.TELEGRAM_BOT_TOKEN = '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11';
+    }
+
     apiProcess = spawn('pnpm', ['--filter', '@tracked/api', 'start'], {
       cwd,
       stdio: 'pipe',
-      env: { ...process.env, API_PORT: String(API_PORT), NODE_ENV: 'development' },
+      env: processEnv,
     });
 
     let stderr = '';
