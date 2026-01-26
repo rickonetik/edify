@@ -33,8 +33,10 @@ function main() {
 
   if (listeners.length === 1) {
     const line = listeners[0];
-    if (line.includes('com.docker') || line.includes('postgres')) {
-      console.log(`✅ Port ${PORT} has single listener: ${line.split(/\s+/)[0]}`);
+    // Single listener is OK if it's Docker or postgres
+    if (line.includes('com.docker') || line.includes('postgres') || line.includes('tracked_postgres')) {
+      const processName = line.split(/\s+/)[0] || 'unknown';
+      console.log(`✅ Port ${PORT} has single listener: ${processName}`);
       return 0;
     }
   }
