@@ -3,10 +3,9 @@ import { Pool } from 'pg';
 import { ApiEnvSchema, validateOrThrow } from '@tracked/shared';
 
 // Allow DATABASE_URL to be optional when SKIP_DB=1
+// Note: We check process.env at module load time, but DATABASE_URL may be set later.
+// The actual check happens in onModuleInit where we verify this.pool.
 const skipDb = process.env.SKIP_DB === '1';
-const hasDatabaseUrl = !!process.env.DATABASE_URL;
-const isDbDisabled = skipDb || !hasDatabaseUrl;
-
 let env;
 try {
   env = validateOrThrow(ApiEnvSchema, process.env);
@@ -18,6 +17,9 @@ try {
     throw error;
   }
 }
+
+// Determine if DB is disabled: SKIP_DB=1 OR DATABASE_URL not set in validated env
+const isDbDisabled = skipDb || !env.DATABASE_URL;
 
 @Global()
 @Module({
