@@ -16,9 +16,10 @@ try {
   }
 }
 
-// Determine if DB is disabled: SKIP_DB=1 OR DATABASE_URL not set in validated env
+// Determine if DB is disabled: SKIP_DB=1 OR DATABASE_URL not set
 // Note: env.DATABASE_URL may be undefined even if process.env.DATABASE_URL is set,
-// because Zod optional() fields are undefined when not present in input
+// because Zod optional() fields are undefined when not present in input.
+// We check both env.DATABASE_URL (from validated schema) and process.env.DATABASE_URL (raw).
 const hasDatabaseUrl = !!(env.DATABASE_URL || process.env.DATABASE_URL);
 const isDbDisabled = skipDb || !hasDatabaseUrl;
 
