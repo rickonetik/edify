@@ -9,8 +9,9 @@ export class ApiExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse();
     const request: any = ctx.getRequest();
 
-    // Гарантия traceId: проверяем req.traceId, затем заголовок x-request-id, иначе генерируем UUID
-    const traceId =
+    // Гарантия requestId: проверяем req.traceId (внутреннее поле), затем заголовок x-request-id, иначе генерируем UUID
+    // В ответе используем requestId (как в контракте ApiErrorV1), а не traceId
+    const requestId =
       request?.traceId ??
       (typeof request?.headers?.['x-request-id'] === 'string'
         ? request.headers['x-request-id']
@@ -83,13 +84,13 @@ export class ApiExceptionFilter implements ExceptionFilter {
       statusCode,
       code: code as any,
       message,
-      traceId,
+      requestId,
       ...(details !== undefined && { details }),
     };
 
     // Ставим x-request-id header даже на ошибках
     if (response?.header) {
-      response.header('x-request-id', traceId);
+      response.header('x-request-id', requestId);
     }
 
     // Fastify reply API

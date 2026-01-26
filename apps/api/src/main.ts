@@ -61,12 +61,10 @@ async function bootstrap() {
     }
 
     // Register static files if path exists
+    // Note: SwaggerModule.setup already handles static files, so we skip manual registration
+    // to avoid route conflicts
     if (swaggerUiPath && existsSync(swaggerUiPath)) {
-      await fastifyInstance.register(fastifyStatic as any, {
-        root: swaggerUiPath,
-        prefix: '/docs/',
-      });
-      logger.info('Swagger UI static files registered successfully');
+      logger.info('Swagger UI static files path found (handled by SwaggerModule)');
     } else {
       logger.warn('Swagger UI static files path not found');
     }

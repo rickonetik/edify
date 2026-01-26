@@ -1,14 +1,15 @@
-import { Controller, Post, Body, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Body, BadRequestException, HttpCode } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { ContractsV1 } from '@tracked/shared';
 import { TelegramAuthService } from './telegram-auth.service.js';
 
 @ApiTags('Auth')
-@Controller('auth')
+@Controller()
 export class TelegramAuthController {
   constructor(private readonly telegramAuthService: TelegramAuthService) {}
 
-  @Post('telegram')
+  @Post('auth/telegram')
+  @HttpCode(200)
   @ApiOperation({ summary: 'Authenticate with Telegram WebApp initData' })
   @ApiBody({
     schema: {
