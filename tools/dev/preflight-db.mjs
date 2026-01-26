@@ -1,6 +1,4 @@
 #!/usr/bin/env node
-/* eslint-env node */
-/* eslint-disable no-console */
 
 /**
  * Preflight check for database port conflicts
