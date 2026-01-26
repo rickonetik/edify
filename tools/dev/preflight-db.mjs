@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+/* eslint-env node */
+/* eslint-disable no-console */
 
 /**
  * Preflight check for database port conflicts
@@ -18,7 +20,7 @@ function checkPortListeners() {
       { encoding: 'utf-8' },
     );
     return output.trim().split('\n').filter((line) => line.trim());
-  } catch (error) {
+  } catch {
     return [];
   }
 }
