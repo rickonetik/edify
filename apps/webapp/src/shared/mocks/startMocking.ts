@@ -61,10 +61,13 @@ export async function startMocking(): Promise<{ mode: MockMode }> {
   if (supportsMswWorker()) {
     try {
       const worker = createMswWorker();
+      // Use BASE_URL to support different base paths (e.g., in production)
+      const baseUrl = import.meta.env.BASE_URL || '/';
+      const workerUrl = `${baseUrl}mockServiceWorker.js`;
       await worker.start({
         onUnhandledRequest: 'bypass', // Don't block requests if not mocked
         serviceWorker: {
-          url: '/mockServiceWorker.js',
+          url: workerUrl,
         },
       });
       currentMockMode = 'msw-worker';
