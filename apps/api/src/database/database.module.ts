@@ -2,8 +2,19 @@ import { Module, Global, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { Pool } from 'pg';
 import { ApiEnvSchema, validateOrThrow } from '@tracked/shared';
 
-const env = validateOrThrow(ApiEnvSchema, process.env);
-const skipDb = process.env.SKIP_DB === '1' || !env.DATABASE_URL;
+// Allow DATABASE_URL to be optional when SKIP_DB=1
+const skipDb = process.env.SKIP_DB === '1';
+let env;
+try {
+  env = validateOrThrow(ApiEnvSchema, process.env);
+} catch (error) {
+  // If validation fails and SKIP_DB=1, allow missing DATABASE_URL
+  if (skipDb) {
+    env = { ...process.env, DATABASE_URL: undefined } as any;
+  } else {
+    throw error;
+  }
+}
 
 @Global()
 @Module({
