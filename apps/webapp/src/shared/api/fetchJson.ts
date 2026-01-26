@@ -2,7 +2,9 @@ import { ContractsV1 } from '@tracked/shared';
 import { buildUrl } from './url.js';
 import { createRequestId, getAuthHeaders } from './headers.js';
 import { ApiClientError, mapHttpStatusToErrorCode } from './errors.js';
-import { webappEnv } from '../env/env.js';
+import { config } from '../config/flags.js';
+import { getMockMode } from '../mocks/startMocking.js';
+import { tryHandleMockRequest } from '../mocks/inline.js';
 
 /**
  * Options for fetchJson
@@ -27,18 +29,65 @@ export interface FetchJsonOptions {
 export async function fetchJson<T = unknown>(options: FetchJsonOptions): Promise<T> {
   const { path, method = 'GET', query, body, headers: customHeaders = {}, signal } = options;
 
-  const baseUrl = webappEnv.VITE_API_BASE_URL || '';
+  const requestId = createRequestId();
+
+  // Try inline mocking if enabled
+  const mockMode = getMockMode();
+  if (mockMode === 'inline') {
+    // Convert query to Record<string, string>
+    const queryString: Record<string, string> = {};
+    if (query) {
+      for (const [key, value] of Object.entries(query)) {
+        if (value !== undefined && value !== null) {
+          queryString[key] = String(value);
+        }
+      }
+    }
+
+    const mockResponse = tryHandleMockRequest({
+      method,
+      path,
+      query: queryString,
+      body,
+    });
+
+    if (mockResponse) {
+      // Handle mock response as if it came from fetch
+      const mockStatus = mockResponse.status;
+      const mockJson = mockResponse.json;
+
+      // Handle success (2xx)
+      if (mockStatus >= 200 && mockStatus < 300) {
+        return mockJson as T;
+      }
+
+      // Handle error (non-2xx) - parse as unified error format
+      const parsed = ContractsV1.ApiErrorResponseV1Schema.safeParse(mockJson);
+      if (parsed.success && parsed.data.error) {
+        const error = parsed.data.error;
+        throw new ApiClientError(
+          mockStatus,
+          error.code,
+          error.message,
+          error.requestId || requestId,
+          error.details,
+        );
+      }
+
+      // Fallback error
+      const code = mapHttpStatusToErrorCode(mockStatus);
+      throw new ApiClientError(mockStatus, code, 'Request failed', requestId);
+    }
+    // If mock returned null, fall through to real fetch
+  }
+
+  // Real API fetch (or fallback from inline mock)
+  const baseUrl = config.API_BASE_URL || '';
   if (!baseUrl) {
-    throw new ApiClientError(
-      0,
-      'CONFIG_ERROR',
-      'VITE_API_BASE_URL is not configured',
-      createRequestId(),
-    );
+    throw new ApiClientError(0, 'CONFIG_ERROR', 'VITE_API_BASE_URL is not configured', requestId);
   }
 
   const url = buildUrl(baseUrl, path, query);
-  const requestId = createRequestId();
 
   // Build headers
   const headers: Record<string, string> = {

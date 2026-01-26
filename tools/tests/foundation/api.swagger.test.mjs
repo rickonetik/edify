@@ -51,6 +51,11 @@ async function buildApi() {
 }
 
 async function startApi(env = {}) {
+  // Ensure previous process is stopped and port is free
+  await stopApi();
+  // Wait a bit more to ensure port is released
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+  
   return new Promise((resolve, reject) => {
     const cwd = process.cwd();
     const timeout = setTimeout(() => {
@@ -100,8 +105,22 @@ async function startApi(env = {}) {
 async function stopApi() {
   if (apiProcess) {
     apiProcess.kill('SIGTERM');
-    await once(apiProcess, 'exit').catch(() => {});
+    try {
+      await Promise.race([
+        once(apiProcess, 'exit'),
+        new Promise((resolve) => setTimeout(resolve, 2000)),
+      ]);
+    } catch {
+      // Ignore errors
+    }
+    // Force kill if still running
+    if (apiProcess && !apiProcess.killed) {
+      apiProcess.kill('SIGKILL');
+      await once(apiProcess, 'exit').catch(() => {});
+    }
     apiProcess = null;
+    // Wait a bit for port to be released
+    await new Promise((resolve) => setTimeout(resolve, 500));
   }
 }
 
