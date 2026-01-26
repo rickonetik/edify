@@ -1,0 +1,158 @@
+import { ContractsV1 } from '@tracked/shared';
+import { buildUrl } from './url.js';
+import { createRequestId, getAuthHeaders } from './headers.js';
+import { ApiClientError, mapHttpStatusToErrorCode } from './errors.js';
+import { webappEnv } from '../env/env.js';
+
+/**
+ * Options for fetchJson
+ */
+export interface FetchJsonOptions {
+  path: string;
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  query?: Record<string, string | number | boolean | undefined>;
+  body?: unknown;
+  headers?: Record<string, string>;
+  signal?: AbortSignal;
+}
+
+/**
+ * Fetch JSON with unified error handling
+ *
+ * @template T - Expected response type
+ * @param options - Fetch options
+ * @returns Parsed JSON response
+ * @throws {ApiClientError} On non-2xx responses
+ */
+export async function fetchJson<T = unknown>(options: FetchJsonOptions): Promise<T> {
+  const { path, method = 'GET', query, body, headers: customHeaders = {}, signal } = options;
+
+  const baseUrl = webappEnv.VITE_API_BASE_URL || '';
+  if (!baseUrl) {
+    throw new ApiClientError(
+      0,
+      'CONFIG_ERROR',
+      'VITE_API_BASE_URL is not configured',
+      createRequestId(),
+    );
+  }
+
+  const url = buildUrl(baseUrl, path, query);
+  const requestId = createRequestId();
+
+  // Build headers
+  const headers: Record<string, string> = {
+    accept: 'application/json',
+    'x-request-id': requestId,
+    ...customHeaders,
+  };
+
+  // Add content-type only if body is present
+  if (body !== undefined) {
+    headers['content-type'] = 'application/json';
+  }
+
+  // Add auth headers (stub for EPIC 3)
+  const authHeaders = await getAuthHeaders();
+  Object.assign(headers, authHeaders);
+
+  // Prepare fetch options
+  const fetchOptions: RequestInit = {
+    method,
+    headers,
+    signal,
+  };
+
+  if (body !== undefined) {
+    fetchOptions.body = JSON.stringify(body);
+  }
+
+  // Execute fetch
+  let response: Response;
+  try {
+    response = await fetch(url, fetchOptions);
+  } catch (error) {
+    // Network error or abort
+    throw new ApiClientError(
+      0,
+      'NETWORK_ERROR',
+      error instanceof Error ? error.message : 'Network request failed',
+      requestId,
+      undefined,
+      error,
+    );
+  }
+
+  // Handle success (2xx)
+  if (response.ok) {
+    // Handle 204 No Content
+    if (response.status === 204) {
+      return undefined as T;
+    }
+
+    // Parse JSON response
+    const contentType = response.headers.get('content-type');
+    if (contentType?.includes('application/json')) {
+      try {
+        const json = await response.json();
+        return json as T;
+      } catch (error) {
+        throw new ApiClientError(
+          response.status,
+          'PARSE_ERROR',
+          'Failed to parse JSON response',
+          requestId,
+          undefined,
+          error,
+        );
+      }
+    }
+
+    // Empty body for non-JSON 2xx responses
+    return undefined as T;
+  }
+
+  // Handle error (non-2xx)
+  const responseRequestId = response.headers.get('x-request-id') || requestId;
+
+  // Try to parse error response as unified format
+  const contentType = response.headers.get('content-type');
+  if (contentType?.includes('application/json')) {
+    try {
+      const errorBody = await response.json();
+      const parsed = ContractsV1.ApiErrorResponseV1Schema.safeParse(errorBody);
+
+      if (parsed.success && parsed.data.error) {
+        const error = parsed.data.error;
+        throw new ApiClientError(
+          response.status,
+          error.code,
+          error.message,
+          error.requestId || responseRequestId,
+          error.details,
+        );
+      }
+    } catch (error) {
+      // If it's already ApiClientError, re-throw
+      if (error instanceof ApiClientError) {
+        throw error;
+      }
+      // If JSON parse failed, fall through to fallback
+    }
+  }
+
+  // Fallback: create error from status code
+  const code = mapHttpStatusToErrorCode(response.status);
+  let message = 'Request failed';
+
+  try {
+    const text = await response.text();
+    if (text) {
+      message = text.length > 200 ? `${text.substring(0, 200)}...` : text;
+    }
+  } catch {
+    // Ignore text parsing errors
+  }
+
+  throw new ApiClientError(response.status, code, message, responseRequestId);
+}
