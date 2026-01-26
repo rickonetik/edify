@@ -193,3 +193,29 @@ export function getMockSubmissionResponse(lessonId: string): ApiOk<Submission> {
     requestId: generateRequestId(),
   };
 }
+
+// Empty responses for __msw=empty testing
+export const emptyLibraryResponse: ApiOk<{
+  catalog: Course[];
+  recommendations: Course[];
+  pageInfo?: { nextCursor?: string | null };
+}> = {
+  data: {
+    catalog: [],
+    recommendations: [],
+    pageInfo: { nextCursor: null },
+  },
+  requestId: generateRequestId(),
+};
+
+export const emptyLearnResponse: ApiOk<LearnSummary> = {
+  data: {
+    greetingName: 'Пользователь',
+    currentCourse: undefined,
+    nextLesson: undefined,
+    continueLessons: [],
+    myCourses: [],
+    news: [],
+  },
+  requestId: generateRequestId(),
+};

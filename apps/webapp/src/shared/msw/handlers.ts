@@ -8,6 +8,8 @@ import {
   getMockLessonResponse,
   mockInviteResponse,
   getMockSubmissionResponse,
+  emptyLibraryResponse,
+  emptyLearnResponse,
 } from './data.js';
 
 function getRequestId(request: Request): string {
@@ -72,6 +74,12 @@ export const handlers = [
       );
     }
 
+    if (msw === 'empty') {
+      return HttpResponse.json(emptyLibraryResponse, {
+        headers: { 'x-request-id': requestId },
+      });
+    }
+
     return HttpResponse.json(mockLibraryResponse, {
       headers: { 'x-request-id': requestId },
     });
@@ -91,6 +99,12 @@ export const handlers = [
         createErrorResponse(500, 'INTERNAL', 'Внутренняя ошибка сервера', requestId),
         { status: 500 },
       );
+    }
+
+    if (msw === 'empty') {
+      return HttpResponse.json(emptyLearnResponse, {
+        headers: { 'x-request-id': requestId },
+      });
     }
 
     return HttpResponse.json(mockLearnResponse, {
