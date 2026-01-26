@@ -85,6 +85,30 @@ export async function request<T>(
 
   // Read response text — only parse non-empty; empty => null (never JSON.parse(''))
   const text = await response.text();
+
+  // Detect HTML response (SPA fallback) in DEV when MSW expected
+  if (response.ok) {
+    const contentType = response.headers.get('content-type') || '';
+    const isJson = contentType.includes('application/json');
+
+    // Check if we got HTML instead of JSON (SPA fallback scenario)
+    if (!isJson && text) {
+      const trimmed = text.trim();
+      if (trimmed.startsWith('<!doctype html') || trimmed.startsWith('<html')) {
+        // This is HTML, not JSON - likely SPA fallback when MSW not active
+        const responseRequestId = response.headers.get('x-request-id') || requestId;
+        throw new ApiClientError('Expected JSON, got HTML', response.status, {
+          code: 'UNEXPECTED_RESPONSE' as any, // Local code, not in shared contracts
+          requestId: responseRequestId,
+          payload: {
+            code: 'UNEXPECTED_RESPONSE' as any,
+            message: 'Expected JSON, got HTML',
+          },
+        });
+      }
+    }
+  }
+
   let parsed: unknown;
   if (text) {
     try {

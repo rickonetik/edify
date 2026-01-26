@@ -1,14 +1,64 @@
+import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from './keys.js';
 import { mapErrorToUiState } from './errors.js';
+import { FLAGS } from '../config/flags.js';
 import * as api from './api.js';
+
+// Hook to track MSW state reactively
+function useMswState() {
+  const [mswReady, setMswReady] = useState(() => (window as any).__MSW_READY__?.() ?? false);
+  const [mswFailed, setMswFailed] = useState(() => (window as any).__MSW_FAILED__?.() ?? false);
+
+  useEffect(() => {
+    const subscribe = (window as any).__MSW_SUBSCRIBE__;
+    if (!subscribe) return;
+
+    const unsubscribe = subscribe((ready: boolean, failed: boolean) => {
+      setMswReady(ready);
+      setMswFailed(failed);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  return { mswReady, mswFailed };
+}
 
 function useQueryWithUiError<TData>(options: {
   queryKey: readonly unknown[];
   queryFn: () => Promise<TData>;
   enabled?: boolean;
 }) {
-  const result = useQuery(options);
+  // Always call hook (React rules) - must be at top level
+  const { mswReady, mswFailed } = useMswState();
+
+  // Determine if queries should be enabled
+  let shouldFetch = false;
+  if (FLAGS.realApi) {
+    shouldFetch = true; // Real API always works
+  } else if (FLAGS.useMsw) {
+    shouldFetch = mswReady && !mswFailed; // MSW must be enabled AND ready (not failed)
+  }
+  // Otherwise: no data source available, shouldFetch = false
+
+  const enabled = shouldFetch && options.enabled !== false;
+
+  const result = useQuery({
+    ...options,
+    enabled,
+  });
+
+  // Auto-refetch when MSW becomes ready (if it wasn't ready initially)
+  const wasEnabledRef = useRef(enabled);
+  useEffect(() => {
+    if (!wasEnabledRef.current && enabled && !result.isFetching) {
+      // MSW just became ready, trigger a refetch
+      result.refetch();
+    }
+    wasEnabledRef.current = enabled;
+  }, [enabled, result.isFetching, result.refetch, result]);
+
   const uiError = result.isError && result.error ? mapErrorToUiState(result.error) : undefined;
   return {
     data: result.data,
