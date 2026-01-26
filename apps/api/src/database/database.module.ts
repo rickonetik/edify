@@ -1,4 +1,4 @@
-import { Module, Global, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Module, Global, OnModuleInit, OnModuleDestroy, Optional } from '@nestjs/common';
 import { Pool } from 'pg';
 import { ApiEnvSchema, validateOrThrow } from '@tracked/shared';
 
@@ -23,8 +23,8 @@ try {
       provide: Pool,
       useFactory: () => {
         if (skipDb) {
-          // Return a mock pool that throws on any query
-          return null as unknown as Pool;
+          // Return null when DB is disabled
+          return null;
         }
         if (!env.DATABASE_URL) {
           throw new Error('DATABASE_URL is required when SKIP_DB is not set');
@@ -39,7 +39,7 @@ try {
   exports: [Pool],
 })
 export class DatabaseModule implements OnModuleInit, OnModuleDestroy {
-  constructor(private readonly pool: Pool | null) {}
+  constructor(@Optional() private readonly pool: Pool | null) {}
 
   async onModuleInit() {
     if (skipDb) {
