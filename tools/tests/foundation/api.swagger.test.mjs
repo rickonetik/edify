@@ -69,6 +69,7 @@ async function startApi(env = {}) {
     const processEnv = { ...process.env, ...env, API_PORT: String(API_PORT) };
     if (!processEnv.NODE_ENV) {
       processEnv.NODE_ENV = 'development'; // Default to development for tests
+      processEnv.SKIP_DB = '1'; // Foundation tests don't require DB
     }
     
     // Use TELEGRAM_BOT_TOKEN from process.env (set in .env or CI secrets)
@@ -132,7 +133,7 @@ async function stopApi() {
 
 test('GET /docs returns 200 in development mode', async () => {
   await buildApi();
-  await startApi({ NODE_ENV: 'development' });
+  await startApi({ NODE_ENV: 'development', SKIP_DB: '1' });
   
   try {
     // Try /docs first, if 404 try /docs/ (some Swagger setups use trailing slash)
@@ -157,7 +158,7 @@ test('GET /docs returns 200 in development mode', async () => {
 
 test('GET /docs returns 404 with error format in production mode', async () => {
   await buildApi();
-  await startApi({ NODE_ENV: 'production' });
+  await startApi({ NODE_ENV: 'production', SKIP_DB: '1' });
   
   try {
     const response = await fetch(`${API_URL}/docs`);

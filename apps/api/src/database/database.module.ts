@@ -42,7 +42,7 @@ export class DatabaseModule implements OnModuleInit, OnModuleDestroy {
   constructor(@Optional() private readonly pool: Pool | null) {}
 
   async onModuleInit() {
-    if (skipDb) {
+    if (skipDb || !this.pool) {
       console.warn(
         '⚠️  Database is disabled (SKIP_DB=1 or DATABASE_URL not set). DB-dependent endpoints will fail.',
       );
@@ -52,7 +52,7 @@ export class DatabaseModule implements OnModuleInit, OnModuleDestroy {
     // Test connection with fail-fast timeout
     try {
       await Promise.race([
-        this.pool!.query('SELECT 1'),
+        this.pool.query('SELECT 1'),
         new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Database connection timeout (3s)')), 3000),
         ),
@@ -65,7 +65,7 @@ export class DatabaseModule implements OnModuleInit, OnModuleDestroy {
     // Ensure users table exists (run migration if needed)
     // In production, migrations should be run separately
     try {
-      await this.pool!.query(`
+      await this.pool.query(`
         CREATE TABLE IF NOT EXISTS users (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           telegram_user_id TEXT NOT NULL UNIQUE,
