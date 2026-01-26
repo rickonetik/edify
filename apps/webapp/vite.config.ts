@@ -7,8 +7,13 @@ export default defineConfig({
   server: { port: 5173, host: true },
   resolve: {
     alias: {
-      '@tracked/shared': resolve(__dirname, '../../packages/shared/src'),
+      // Use built dist in production, source in development
+      // This respects package.json exports and prevents deep imports
+      '@tracked/shared': resolve(__dirname, '../../packages/shared/dist/index.js'),
     },
+  },
+  optimizeDeps: {
+    include: ['@tracked/shared'],
   },
   build: {
     commonjsOptions: {
