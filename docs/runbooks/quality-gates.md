@@ -109,13 +109,17 @@ These gates require manual verification and are not automated by `pnpm verify`.
 
 **Example**:
 
-```typescript
-// ❌ Wrong
-import { ApiEnvSchema } from '@tracked/shared/src/env/schemas';
+```text
+❌ Wrong — НЕ КОПИРУЙТЕ ЭТУ СТРОКУ (deep import запрещен)
+import { ApiEnvSchema } from '@tracked/shared/<do-not-import>/env/schemas';
+```
 
-// ✅ Correct
+```typescript
+// ✅ Correct (public API)
 import { ApiEnvSchema } from '@tracked/shared';
 ```
+
+**Note**: См. реализацию в `packages/shared` (internal); импортировать только из `@tracked/shared`.
 
 ### Lint Failure
 

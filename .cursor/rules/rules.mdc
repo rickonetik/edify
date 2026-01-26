@@ -9,6 +9,7 @@ No scope creep (no refactors/renames/deps)
 Foundation frozen in EPIC 1+
 No structure changes
 Shared is SSoT; no deep imports; no wildcard paths
-UI has no fetching/business logic
+UI kit (apps/webapp/src/shared/ui/*) has no fetching/business logic
+Pages/features may use hooks/fetcher
 Run verify/test/audit and attach artifacts
 Stop after DoD
