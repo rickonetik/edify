@@ -389,8 +389,24 @@ export function LibraryPage() {
 
   const catalogCourses = data?.catalog || [];
   const recommendedCourses = data?.recommendations || [];
-  // News not in LibraryResponse, keep empty for now (can be added later)
-  const news: Array<{ id: string; title: string; desc: string }> = [];
+  // Local mock news (not from API, as per Story 1.5)
+  const news: Array<{ id: string; title: string; desc: string }> = [
+    {
+      id: '1',
+      title: 'Новый модуль',
+      desc: 'добавлен в курс CryptoCompliance',
+    },
+    {
+      id: '2',
+      title: 'Обновление требований KYC',
+      desc: 'Новые правила идентификации клиентов',
+    },
+    {
+      id: '3',
+      title: 'Изменения в DeFi регулировании',
+      desc: 'Европейский регулятор опубликовал рекомендации',
+    },
+  ];
 
   // Filter courses based on search query
   const filteredCatalogCourses = useMemo(() => {
