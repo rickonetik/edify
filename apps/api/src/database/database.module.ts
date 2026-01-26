@@ -47,11 +47,15 @@ export class DatabaseModule implements OnModuleInit, OnModuleDestroy {
   constructor(@Optional() private readonly pool: Pool | null) {}
 
   async onModuleInit() {
-    if (isDbDisabled || !this.pool) {
+    // Check if pool is null (disabled) or if we have a valid pool
+    if (!this.pool) {
+      // Pool is null only when isDbDisabled was true at module load
       const reason = skipDb ? 'SKIP_DB=1' : 'DATABASE_URL not set';
       console.warn(`⚠️  Database is disabled (${reason}). DB-dependent endpoints will fail.`);
       return;
     }
+
+    // If we have a pool, DB is enabled - no warning needed
 
     // Test connection with fail-fast timeout
     try {
