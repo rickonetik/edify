@@ -25,7 +25,7 @@ try {
     {
       provide: Pool,
       useFactory: () => {
-        if (skipDb) {
+        if (isDbDisabled) {
           // Return null when DB is disabled
           return null;
         }
@@ -87,7 +87,7 @@ export class DatabaseModule implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    if (this.pool && !skipDb) {
+    if (this.pool && !isDbDisabled) {
       await this.pool.end();
     }
   }

@@ -66,10 +66,15 @@ async function startApi(env = {}) {
     }, STARTUP_TIMEOUT);
 
     // Explicitly set NODE_ENV to ensure deterministic behavior
-    const processEnv = { ...process.env, ...env, API_PORT: String(API_PORT) };
+    // Important: env parameter overrides process.env, so explicitly passed NODE_ENV takes precedence
+    const processEnv = { ...process.env, API_PORT: String(API_PORT), ...env };
     if (!processEnv.NODE_ENV) {
       processEnv.NODE_ENV = 'development'; // Default to development for tests
       processEnv.SKIP_DB = '1'; // Foundation tests don't require DB
+    }
+    // Ensure SKIP_DB is set for foundation tests if not explicitly provided
+    if (!('SKIP_DB' in env)) {
+      processEnv.SKIP_DB = '1';
     }
     
     // Use TELEGRAM_BOT_TOKEN from process.env (set in .env or CI secrets)
