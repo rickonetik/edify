@@ -19,7 +19,7 @@ interface UserDbModel {
  * Users repository for database operations
  */
 export class UsersRepository {
-  constructor(private readonly pool: Pool) {}
+  constructor(private readonly pool: Pool | null) {}
 
   /**
    * Upsert user by telegram_user_id
@@ -33,6 +33,9 @@ export class UsersRepository {
     lastName?: string | null;
     avatarUrl?: string | null;
   }): Promise<ContractsV1.UserV1> {
+    if (!this.pool) {
+      throw new Error('Database is disabled (SKIP_DB=1). Cannot perform database operations.');
+    }
     const now = new Date();
 
     const query = `

@@ -5,6 +5,26 @@
 - Docker Desktop installed and running
 - `docker compose` command available (Docker Compose V2)
 
+## ⚠️ Important: Local Postgres Conflict
+
+**If you use Docker Compose Postgres on `localhost:5432`, local Homebrew Postgres must be stopped.**
+
+Check for running local Postgres:
+
+```bash
+brew services list | grep -i postgres
+```
+
+Stop local Postgres services:
+
+```bash
+brew services stop postgresql@14 || true
+brew services stop postgresql@15 || true
+brew services stop postgresql@16 || true
+```
+
+**Why:** Having both local Postgres and Docker Postgres on the same port causes connection conflicts. Docker Compose Postgres is the single source of truth for development.
+
 ## Setup
 
 1. Copy environment file:

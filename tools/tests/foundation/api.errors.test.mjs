@@ -65,7 +65,13 @@ async function startApi() {
 
     // Use TELEGRAM_BOT_TOKEN from process.env (set in .env or CI secrets)
     // If not set, use test token (for local development without .env)
-    const processEnv = { ...process.env, API_PORT: String(API_PORT), NODE_ENV: 'development' };
+    // Foundation tests don't require DB, so set SKIP_DB=1
+    const processEnv = {
+      ...process.env,
+      API_PORT: String(API_PORT),
+      NODE_ENV: 'test',
+      SKIP_DB: '1',
+    };
     if (!processEnv.TELEGRAM_BOT_TOKEN) {
       processEnv.TELEGRAM_BOT_TOKEN = '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11';
     }

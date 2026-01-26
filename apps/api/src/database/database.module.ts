@@ -3,6 +3,7 @@ import { Pool } from 'pg';
 import { ApiEnvSchema, validateOrThrow } from '@tracked/shared';
 
 const env = validateOrThrow(ApiEnvSchema, process.env);
+const skipDb = process.env.SKIP_DB === '1' || !env.DATABASE_URL;
 
 @Global()
 @Module({
@@ -10,11 +11,16 @@ const env = validateOrThrow(ApiEnvSchema, process.env);
     {
       provide: Pool,
       useFactory: () => {
+        if (skipDb) {
+          // Return a mock pool that throws on any query
+          return null as unknown as Pool;
+        }
         if (!env.DATABASE_URL) {
-          throw new Error('DATABASE_URL is required');
+          throw new Error('DATABASE_URL is required when SKIP_DB is not set');
         }
         return new Pool({
           connectionString: env.DATABASE_URL,
+          connectionTimeoutMillis: 3000, // Fail-fast: 3 seconds
         });
       },
     },
@@ -22,12 +28,24 @@ const env = validateOrThrow(ApiEnvSchema, process.env);
   exports: [Pool],
 })
 export class DatabaseModule implements OnModuleInit, OnModuleDestroy {
-  constructor(private readonly pool: Pool) {}
+  constructor(private readonly pool: Pool | null) {}
 
   async onModuleInit() {
-    // Test connection
+    if (skipDb) {
+      console.warn(
+        '⚠️  Database is disabled (SKIP_DB=1 or DATABASE_URL not set). DB-dependent endpoints will fail.',
+      );
+      return;
+    }
+
+    // Test connection with fail-fast timeout
     try {
-      await this.pool.query('SELECT 1');
+      await Promise.race([
+        this.pool!.query('SELECT 1'),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Database connection timeout (3s)')), 3000),
+        ),
+      ]);
     } catch (error) {
       console.error('Failed to connect to database:', error);
       throw error;
@@ -36,7 +54,7 @@ export class DatabaseModule implements OnModuleInit, OnModuleDestroy {
     // Ensure users table exists (run migration if needed)
     // In production, migrations should be run separately
     try {
-      await this.pool.query(`
+      await this.pool!.query(`
         CREATE TABLE IF NOT EXISTS users (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           telegram_user_id TEXT NOT NULL UNIQUE,
@@ -56,6 +74,8 @@ export class DatabaseModule implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    await this.pool.end();
+    if (this.pool && !skipDb) {
+      await this.pool.end();
+    }
   }
 }
