@@ -5,25 +5,21 @@
 - Docker Desktop installed and running
 - `docker compose` command available (Docker Compose V2)
 
-## ⚠️ Important: Local Postgres Conflict
+## Quick Start
 
-**If you use Docker Compose Postgres on `localhost:5432`, local Homebrew Postgres must be stopped.**
-
-Check for running local Postgres:
+Use the convenience script to start everything:
 
 ```bash
-brew services list | grep -i postgres
+pnpm dev:all
 ```
 
-Stop local Postgres services:
+This will:
 
-```bash
-brew services stop postgresql@14 || true
-brew services stop postgresql@15 || true
-brew services stop postgresql@16 || true
-```
+1. Start Docker Compose services (Postgres, Redis, MinIO)
+2. Run database migrations
+3. Start the API server
 
-**Why:** Having both local Postgres and Docker Postgres on the same port causes connection conflicts. Docker Compose Postgres is the single source of truth for development.
+**Note:** Docker Postgres uses port **5433** (not 5432), so there's no conflict with local Homebrew Postgres. You can run both simultaneously if needed.
 
 ## Setup
 
@@ -35,7 +31,9 @@ brew services stop postgresql@16 || true
 
 2. Start services:
    ```bash
-   docker compose -f infra/docker-compose.yml --env-file .env up -d
+   pnpm infra:up
+   # or manually:
+   docker compose -f infra/docker-compose.yml --env-file .env up -d postgres redis minio
    ```
 
 ## Verification
@@ -51,10 +49,16 @@ All services should be `running` and `healthy`.
 ### Postgres
 
 ```bash
-psql -h localhost -p 5432 -U tracked -d tracked_lms -c "SELECT 1;"
+psql -h localhost -p 5433 -U tracked -d tracked_lms -c "SELECT 1;"
 ```
 
 Password: `tracked_password` (from .env)
+
+Or use `DATABASE_URL` from `.env`:
+
+```bash
+psql "$DATABASE_URL" -c "SELECT 1;"
+```
 
 ### Redis
 
@@ -75,7 +79,9 @@ Should return: `PONG`
 ## Stop Services
 
 ```bash
-docker compose -f infra/docker-compose.yml down
+pnpm infra:down
+# or manually:
+docker compose -f infra/docker-compose.yml down -v
 ```
 
 ## Clean Data (⚠️ Destructive)
@@ -98,18 +104,29 @@ docker volume rm tracked-lms_minio_data
 
 ## Services
 
-- **Postgres**: Port 5432 (configurable via POSTGRES_PORT)
-- **Redis**: Port 6379 (configurable via REDIS_PORT)
-- **MinIO API**: Port 9000 (configurable via MINIO_PORT)
-- **MinIO Console**: Port 9001 (configurable via MINIO_CONSOLE_PORT)
+- **Postgres**: Port **5433** (Docker maps 5433→5432 to avoid conflicts with local Postgres)
+- **Redis**: Port 6379
+- **MinIO API**: Port 9000
+- **MinIO Console**: Port 9001
+
+## Database Migrations
+
+Run migrations after starting Postgres:
+
+```bash
+pnpm db:migrate
+# or manually:
+psql "$DATABASE_URL" -f infra/migrations/001_create_users_table.sql
+```
 
 ## Troubleshooting
 
 ### Services not starting
 
 - Check Docker Desktop is running
-- Check ports are not already in use: `lsof -i :5432` (or other ports)
+- Check ports are not already in use: `lsof -i :5433` (or other ports)
 - Check logs: `docker compose -f infra/docker-compose.yml logs <service-name>`
+- Run preflight check: `node tools/dev/preflight-db.mjs`
 
 ### Health checks failing
 

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "pnpm build && pnpm start",
     "build": "tsc -p tsconfig.json",
-    "start": "node dist/apps/api/src/main.js",
+    "start": "node --env-file-if-exists=.env dist/apps/api/src/main.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
     "clean": "rm -rf dist"
