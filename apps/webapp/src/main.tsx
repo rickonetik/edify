@@ -4,9 +4,11 @@ import { App } from './App.js';
 import './shared/ui/theme/tokens.css';
 import './shared/ui/theme/global.css';
 
-// Start MSW in DEV only if VITE_USE_MSW=true
+import { FLAGS } from './shared/config/flags.js';
+
+// Start MSW if FLAGS.useMsw is true (respects realApi override)
 async function enableMocking() {
-  if (import.meta.env.DEV && import.meta.env.VITE_USE_MSW === 'true') {
+  if (FLAGS.useMsw) {
     const { worker } = await import('./shared/msw/index.js');
     await worker.start({ onUnhandledRequest: 'bypass' });
   }

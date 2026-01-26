@@ -1,4 +1,4 @@
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Button,
   Card,
@@ -388,51 +388,31 @@ function LoadingState() {
 
 // Main AccountPage Component
 export function AccountPage() {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const state = searchParams.get('state') || 'default';
-  const { data: me } = useMe();
+  const { data: me, isLoading, isError, uiError, refetch } = useMe();
   const profileName = me?.name ?? mockProfile.name;
   const profileHandle = me?.handle ?? mockProfile.handle;
 
   // Loading state
-  if (state === 'loading') {
+  if (isLoading) {
     return <LoadingState />;
   }
 
-  // Empty state
-  if (state === 'empty') {
-    return (
-      <div style={{ padding: 'var(--sp-4)' }}>
-        <EmptyState
-          title="Профиль пока пуст"
-          description="Начните обучение, чтобы увидеть свой прогресс"
-          actionLabel="Перейти в обучение"
-          onAction={() => {
-            navigate('/learn');
-          }}
-        />
-      </div>
-    );
-  }
-
   // Error state
-  if (state === 'error') {
+  if (isError && uiError) {
     return (
       <div style={{ padding: 'var(--sp-4)' }}>
         <ErrorState
-          title="Не удалось загрузить профиль"
-          description="Попробуйте ещё раз"
+          title={uiError.title}
+          description={uiError.description}
           actionLabel="Повторить"
-          onAction={() => {
-            navigate('/account');
-          }}
+          onAction={() => refetch()}
         />
       </div>
     );
   }
 
-  // Default state
+  // Default state (me can be undefined, fallback to mock)
   return (
     <div style={{ padding: 'var(--sp-4)' }}>
       <ProfileCard name={profileName} handle={profileHandle} />
