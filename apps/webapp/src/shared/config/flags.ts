@@ -1,28 +1,28 @@
 /**
- * Feature flags and configuration
+ * Feature flags for webapp data source control.
+ *
+ * Priority rule: realApi === true → useMsw = false (hard override)
+ *
+ * Environment variables:
+ * - VITE_USE_MSW: 'true' to enable MSW (only in DEV)
+ * - VITE_REAL_API: 'true' to force real API (disables MSW even if VITE_USE_MSW=true)
  */
-
-/**
- * API configuration flags
- */
-export const config = {
+export const FLAGS = {
   /**
-   * Use MSW for mocking (only in DEV, ignored in PROD)
+   * Use MSW (Mock Service Worker) for API mocking.
+   * Only works in DEV mode.
+   * Automatically disabled if realApi === true.
    */
-  USE_MSW: import.meta.env.VITE_USE_MSW === '1' || import.meta.env.VITE_USE_MSW === 'true',
-
-  /**
-   * Use real API (disables mocking)
-   */
-  REAL_API: import.meta.env.VITE_REAL_API === '1' || import.meta.env.VITE_REAL_API === 'true',
+  useMsw: (() => {
+    if (import.meta.env.VITE_REAL_API === 'true') {
+      return false; // Hard override: real API disables MSW
+    }
+    return import.meta.env.DEV && import.meta.env.VITE_USE_MSW === 'true';
+  })(),
 
   /**
-   * API base URL
+   * Force real API usage (disables MSW).
+   * When true, fetcher will use VITE_API_BASE_URL or same-origin.
    */
-  API_BASE_URL: import.meta.env.VITE_API_BASE_URL || '',
-
-  /**
-   * API prefix (default '/api')
-   */
-  API_PREFIX: '/api',
+  realApi: import.meta.env.VITE_REAL_API === 'true',
 } as const;

@@ -1,2 +1,2 @@
-export * from './codes.js';
-export * from './types.js';
+export { ErrorCodes } from './codes.js';
+export type { ApiErrorResponse } from './types.js';

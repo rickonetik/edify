@@ -1,2 +1,2 @@
 export * from './common';
-export * as ContractsV1 from './v1';
+export * from './v1';

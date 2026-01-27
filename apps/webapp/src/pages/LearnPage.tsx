@@ -1,6 +1,6 @@
-import React from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button, Card, Skeleton, EmptyState, ErrorState } from '../shared/ui/index.js';
+import { useLearnSummary } from '../shared/query/index.js';
 
 // Mock data
 const mockCurrentCourse = {
@@ -160,7 +160,13 @@ function ProgressBar({ progress }: { progress: number }) {
 }
 
 // Current Course Card
-function CurrentCourseCard() {
+function CurrentCourseCard({
+  course,
+  nextLesson,
+}: {
+  course: { id: string; title: string; completedLessons: number; totalLessons: number };
+  nextLesson?: { id: string; courseId: string };
+}) {
   return (
     <Card
       style={{
@@ -184,7 +190,7 @@ function CurrentCourseCard() {
             flex: 1,
           }}
         >
-          <ProgressCircle completed={mockCurrentCourse.completed} total={mockCurrentCourse.total} />
+          <ProgressCircle completed={course.completedLessons} total={course.totalLessons} />
           <div
             style={{
               flex: 1,
@@ -208,7 +214,7 @@ function CurrentCourseCard() {
                 color: 'var(--fg)',
               }}
             >
-              {mockCurrentCourse.title}
+              {course.title}
             </div>
           </div>
         </div>
@@ -230,7 +236,7 @@ function CurrentCourseCard() {
               minHeight: '36px',
             }}
           >
-            <Link to={`/course/${mockCurrentCourse.courseId}`}>Продолжить</Link>
+            <Link to={`/course/${course.id}`}>Продолжить</Link>
           </Button>
         </div>
       </div>
@@ -239,7 +245,7 @@ function CurrentCourseCard() {
 }
 
 // Next Lesson Card
-function NextLessonCard() {
+function NextLessonCard({ lesson }: { lesson: { id: string; title: string; courseId: string } }) {
   return (
     <Card
       style={{
@@ -289,7 +295,7 @@ function NextLessonCard() {
             color: 'var(--fg)',
           }}
         >
-          {mockNextLesson.title}
+          {lesson.title}
         </div>
       </div>
       <div
@@ -307,7 +313,19 @@ function NextLessonCard() {
 }
 
 // Continue Learning Section
-function ContinueLearningSection() {
+function ContinueLearningSection({
+  lessons,
+}: {
+  lessons: Array<{
+    id: string;
+    title: string;
+    courseId: string;
+    progressPct?: number;
+    durationMinutes?: number;
+  }>;
+}) {
+  if (lessons.length === 0) return null;
+
   return (
     <div style={{ marginBottom: 'var(--sp-6)' }}>
       <SectionHeader
@@ -336,7 +354,7 @@ function ContinueLearningSection() {
         }
       />
       <div>
-        {mockContinueLessons.map((lesson) => (
+        {lessons.map((lesson) => (
           <Link
             key={lesson.id}
             to={`/course/${lesson.courseId}`}
@@ -373,10 +391,14 @@ function ContinueLearningSection() {
                     marginLeft: 'var(--sp-3)',
                   }}
                 >
-                  {lesson.meta}
+                  {lesson.durationMinutes
+                    ? `${lesson.durationMinutes} мин`
+                    : lesson.progressPct
+                      ? `${lesson.progressPct}%`
+                      : ''}
                 </div>
               </div>
-              <ProgressBar progress={lesson.progress} />
+              {lesson.progressPct !== undefined && <ProgressBar progress={lesson.progressPct} />}
             </Card>
           </Link>
         ))}
@@ -386,7 +408,13 @@ function ContinueLearningSection() {
 }
 
 // My Courses Section
-function MyCoursesSection() {
+function MyCoursesSection({
+  courses,
+}: {
+  courses: Array<{ id: string; title: string; progressPct: number; badges?: string[] }>;
+}) {
+  if (courses.length === 0) return null;
+
   return (
     <div style={{ marginBottom: 'var(--sp-6)' }}>
       <SectionHeader
@@ -418,106 +446,115 @@ function MyCoursesSection() {
             display: none;
           }
         `}</style>
-        {mockMyCourses.map((course) => (
-          <Link
-            key={course.id}
-            to={`/course/${course.id}`}
-            style={{
-              textDecoration: 'none',
-              flexShrink: 0,
-              flex: '0 0 auto',
-              scrollSnapAlign: 'start',
-            }}
-          >
-            <Card
+        {courses.map((course) => {
+          const isNew = course.badges?.includes('NEW');
+          return (
+            <Link
+              key={course.id}
+              to={`/course/${course.id}`}
               style={{
-                width: '220px',
-                height: '140px',
-                padding: 'var(--sp-3)',
-                position: 'relative',
-                display: 'flex',
-                flexDirection: 'column',
+                textDecoration: 'none',
+                flexShrink: 0,
+                flex: '0 0 auto',
+                scrollSnapAlign: 'start',
               }}
             >
-              {course.isNew && (
+              <Card
+                style={{
+                  width: '220px',
+                  height: '140px',
+                  padding: 'var(--sp-3)',
+                  position: 'relative',
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
+              >
+                {isNew && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 'var(--sp-2)',
+                      right: 'var(--sp-2)',
+                      padding: '2px var(--sp-2)',
+                      backgroundColor: 'var(--accent)',
+                      borderRadius: 'var(--r-sm)',
+                      fontSize: 'var(--text-xs)',
+                      color: 'var(--bg)',
+                      fontWeight: 'var(--font-weight-medium)',
+                      zIndex: 1,
+                    }}
+                  >
+                    New!
+                  </div>
+                )}
                 <div
                   style={{
-                    position: 'absolute',
-                    top: 'var(--sp-2)',
-                    right: 'var(--sp-2)',
-                    padding: '2px var(--sp-2)',
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: 'var(--r-md)',
                     backgroundColor: 'var(--accent)',
-                    borderRadius: 'var(--r-sm)',
-                    fontSize: 'var(--text-xs)',
-                    color: 'var(--bg)',
-                    fontWeight: 'var(--font-weight-medium)',
-                    zIndex: 1,
+                    opacity: 0.2,
+                    marginBottom: 'var(--sp-3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
                   }}
                 >
-                  New!
+                  <div
+                    style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      backgroundColor: 'var(--accent)',
+                      opacity: 0.5,
+                    }}
+                  />
                 </div>
-              )}
-              <div
-                style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: 'var(--r-md)',
-                  backgroundColor: 'var(--accent)',
-                  opacity: 0.2,
-                  marginBottom: 'var(--sp-3)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
                 <div
                   style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '50%',
-                    backgroundColor: 'var(--accent)',
-                    opacity: 0.5,
+                    fontSize: 'var(--text-sm)',
+                    fontWeight: 'var(--font-weight-medium)',
+                    color: 'var(--fg)',
+                    marginBottom: 'var(--sp-2)',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    lineHeight: '1.4',
+                    height: '2.8em',
+                    paddingRight: isNew ? 'var(--sp-6)' : 0,
                   }}
-                />
-              </div>
-              <div
-                style={{
-                  fontSize: 'var(--text-sm)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--fg)',
-                  marginBottom: 'var(--sp-2)',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  lineHeight: '1.4',
-                  height: '2.8em',
-                  paddingRight: course.isNew ? 'var(--sp-6)' : 0,
-                }}
-              >
-                {course.title}
-              </div>
-              <div
-                style={{
-                  fontSize: 'var(--text-xs)',
-                  color: 'var(--muted-fg)',
-                  marginTop: 'auto',
-                }}
-              >
-                {course.progress}%
-              </div>
-            </Card>
-          </Link>
-        ))}
+                >
+                  {course.title}
+                </div>
+                <div
+                  style={{
+                    fontSize: 'var(--text-xs)',
+                    color: 'var(--muted-fg)',
+                    marginTop: 'auto',
+                  }}
+                >
+                  {course.progressPct}%
+                </div>
+              </Card>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
 }
 
 // News Section
-function NewsSection() {
+function NewsSection({
+  news,
+}: {
+  news: Array<{ id: string; title: string; description?: string; badge?: string }>;
+}) {
+  if (news.length === 0) return null;
+
   return (
     <div style={{ marginBottom: 'var(--sp-6)' }}>
       <SectionHeader
@@ -529,15 +566,15 @@ function NewsSection() {
               color: 'var(--muted-fg)',
             }}
           >
-            48
+            {news.length}
           </div>
         }
       />
       <div>
-        {mockNews.map((news) => (
+        {news.map((item) => (
           <Link
-            key={news.id}
-            to={`/course/${news.courseId}`}
+            key={item.id}
+            to={`/update/${item.id}`}
             style={{ textDecoration: 'none', display: 'block' }}
           >
             <Card
@@ -554,16 +591,18 @@ function NewsSection() {
                   marginBottom: 'var(--sp-2)',
                 }}
               >
-                {news.title}
+                {item.title}
               </div>
-              <div
-                style={{
-                  fontSize: 'var(--text-sm)',
-                  color: 'var(--muted-fg)',
-                }}
-              >
-                {news.description}
-              </div>
+              {item.description && (
+                <div
+                  style={{
+                    fontSize: 'var(--text-sm)',
+                    color: 'var(--muted-fg)',
+                  }}
+                >
+                  {item.description}
+                </div>
+              )}
             </Card>
           </Link>
         ))}
@@ -594,44 +633,46 @@ function LoadingState() {
 
 // Main LearnPage Component
 export function LearnPage() {
-  const [searchParams] = useSearchParams();
-  const state = searchParams.get('state') || 'default';
+  const navigate = useNavigate();
+  const { data, isLoading, isError, uiError, refetch } = useLearnSummary();
 
-  if (state === 'loading') {
+  // Loading state
+  if (isLoading) {
     return <LoadingState />;
   }
 
-  if (state === 'empty') {
+  // Error state
+  if (isError && uiError) {
+    return (
+      <div style={{ padding: 'var(--sp-4)' }}>
+        <ErrorState
+          title={uiError.title}
+          description={uiError.description}
+          actionLabel="Повторить"
+          onAction={() => refetch()}
+        />
+      </div>
+    );
+  }
+
+  // Empty state (no data or empty sections)
+  if (
+    !data ||
+    (!data.currentCourse && data.continueLessons.length === 0 && data.myCourses.length === 0)
+  ) {
     return (
       <div style={{ padding: 'var(--sp-4)' }}>
         <EmptyState
           title="Нет активного обучения"
           description="Начните обучение, выбрав курс из библиотеки"
           actionLabel="Открыть библиотеку"
-          onAction={() => {
-            window.location.href = '/library';
-          }}
+          onAction={() => navigate('/library')}
         />
       </div>
     );
   }
 
-  if (state === 'error') {
-    return (
-      <div style={{ padding: 'var(--sp-4)' }}>
-        <ErrorState
-          title="Не удалось загрузить данные"
-          description="Проверьте подключение к интернету и попробуйте снова"
-          actionLabel="Повторить"
-          onAction={() => {
-            window.location.href = '/learn';
-          }}
-        />
-      </div>
-    );
-  }
-
-  // Default state
+  // Default state with data
   return (
     <div style={{ padding: 'var(--sp-4)' }}>
       {/* Header */}
@@ -643,23 +684,27 @@ export function LearnPage() {
           margin: '0 0 var(--sp-5) 0',
         }}
       >
-        Привет, Никита
+        Привет, {data.greetingName}
       </h1>
 
       {/* Current Course Card */}
-      <CurrentCourseCard />
+      {data.currentCourse && (
+        <CurrentCourseCard course={data.currentCourse} nextLesson={data.nextLesson} />
+      )}
 
       {/* Next Lesson Card */}
-      <NextLessonCard />
+      {data.nextLesson && !data.currentCourse && <NextLessonCard lesson={data.nextLesson} />}
 
       {/* Continue Learning Section */}
-      <ContinueLearningSection />
+      {data.continueLessons.length > 0 && (
+        <ContinueLearningSection lessons={data.continueLessons} />
+      )}
 
       {/* My Courses Section */}
-      <MyCoursesSection />
+      {data.myCourses.length > 0 && <MyCoursesSection courses={data.myCourses} />}
 
       {/* News Section */}
-      <NewsSection />
+      {data.news.length > 0 && <NewsSection news={data.news} />}
     </div>
   );
 }

@@ -1,9 +1,9 @@
-/**
- * Common types for Contracts V1
- */
+export type ID = string;
+export type ISODateTime = string;
+export type ISODate = string;
 
-export type Id = string;
+export type Locale = 'ru' | 'en';
+export type Platform = 'web' | 'tg-miniapp';
 
-export type IsoDateTime = string; // ISO 8601
-
-export type UrlString = string;
+export type Pagination = { cursor?: string; limit: number };
+export type PageInfo = { nextCursor?: string | null };
