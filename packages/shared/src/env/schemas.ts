@@ -11,6 +11,23 @@ export const ApiEnvSchema = z.object({
   S3_BUCKET: z.string().optional(),
   S3_REGION: z.string().optional(),
   S3_FORCE_PATH_STYLE: z.string().optional(),
+  TELEGRAM_BOT_TOKEN: z.string().min(1, 'TELEGRAM_BOT_TOKEN is required'),
+  TELEGRAM_INITDATA_MAX_AGE_SECONDS: z.coerce.number().default(86400),
+  JWT_ACCESS_SECRET: z.string().min(16, 'JWT_ACCESS_SECRET must be at least 16 characters'),
+  JWT_ACCESS_TTL_SECONDS: z.coerce.number().default(900),
+  SWAGGER_ENABLED: z
+    .preprocess((val) => {
+      if (val === undefined || val === null || val === '') return false;
+      if (typeof val === 'boolean') return val;
+      if (typeof val === 'string') {
+        // Only '1' or 'true' (case-insensitive) are truthy
+        // Everything else ('0', 'false', '', etc.) is falsy
+        const normalized = val.toLowerCase().trim();
+        return normalized === '1' || normalized === 'true';
+      }
+      return false;
+    }, z.boolean())
+    .default(false),
 });
 
 export const BotEnvSchema = z.object({

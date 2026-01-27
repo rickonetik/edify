@@ -7,7 +7,6 @@ import { AppModule } from './app.module.js';
 import { createPinoLogger } from './common/logging/pino.js';
 import { RequestIdInterceptor } from './common/request-id/request-id.interceptor.js';
 import { ApiExceptionFilter } from './common/errors/api-exception.filter.js';
-import fastifyStatic from '@fastify/static';
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
 import { readdirSync } from 'node:fs';
@@ -26,10 +25,14 @@ async function bootstrap() {
   app.useGlobalInterceptors(new RequestIdInterceptor());
   app.useGlobalFilters(new ApiExceptionFilter());
 
-  // Swagger только в dev
-  if (env.NODE_ENV !== 'production') {
+  // Swagger enabled only if:
+  // 1. NODE_ENV !== 'production' (hard gate - never in production)
+  // 2. SWAGGER_ENABLED === true (explicitly enabled)
+  const isProd = env.NODE_ENV === 'production';
+  const swaggerEnabled = !isProd && env.SWAGGER_ENABLED === true;
+
+  if (swaggerEnabled) {
     // Register static files for Swagger UI (required for Fastify)
-    const fastifyInstance = app.getHttpAdapter().getInstance();
 
     // Find swagger-ui-dist in pnpm structure
     let swaggerUiPath: string | undefined;
@@ -61,12 +64,10 @@ async function bootstrap() {
     }
 
     // Register static files if path exists
+    // Note: SwaggerModule.setup already handles static files, so we skip manual registration
+    // to avoid route conflicts
     if (swaggerUiPath && existsSync(swaggerUiPath)) {
-      await fastifyInstance.register(fastifyStatic as any, {
-        root: swaggerUiPath,
-        prefix: '/docs/',
-      });
-      logger.info('Swagger UI static files registered successfully');
+      logger.info('Swagger UI static files path found (handled by SwaggerModule)');
     } else {
       logger.warn('Swagger UI static files path not found');
     }
@@ -75,6 +76,15 @@ async function bootstrap() {
       .setTitle('tracked-lms API')
       .setDescription('Telegram Mini App backend')
       .setVersion(process.env.npm_package_version || '0.0.0')
+      .addBearerAuth(
+        {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description: 'Enter JWT token',
+        },
+        'bearer',
+      )
       .build();
 
     const document = SwaggerModule.createDocument(app, config);

@@ -181,11 +181,11 @@
 **Выполнено:**
 
 - Добавлен zod в `packages/shared/package.json` (dependencies: zod ^3.23.0)
-- Создана структура env в `packages/shared/src/env/`:
+- Создана структура env в `packages/shared` (internal):
   - `schemas.ts`: ApiEnvSchema, BotEnvSchema, WebappEnvSchema
   - `validate.ts`: validateOrThrow с маскировкой секретов
   - `index.ts`: экспорт схем и функций
-- Обновлён `packages/shared/src/index.ts`: экспорт env модуля
+- Обновлён `packages/shared` (internal): экспорт env модуля
 - Обновлён `apps/api/src/main.ts`: валидация ApiEnvSchema на старте
 - Обновлён `apps/bot/src/index.ts`: валидация BotEnvSchema на старте (BOT_TOKEN required)
 - Создан `apps/webapp/src/shared/env/env.ts`: безопасная валидация для webapp (safeParse)

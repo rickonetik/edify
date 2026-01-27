@@ -4,6 +4,6 @@ export interface ApiErrorResponse {
   statusCode: number;
   code: ApiErrorCode;
   message: string;
-  traceId: string;
+  requestId: string;
   details?: unknown;
 }

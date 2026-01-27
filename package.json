@@ -14,13 +14,19 @@
     "dev:webapp": "pnpm --filter @tracked/webapp dev",
     "start:api": "pnpm --filter @tracked/shared build && pnpm --filter @tracked/api start",
     "dev:api": "pnpm --filter @tracked/shared build && pnpm --filter @tracked/api dev",
+    "infra:up": "docker compose -f infra/docker-compose.yml --env-file .env up -d postgres redis minio",
+    "infra:down": "docker compose -f infra/docker-compose.yml down -v",
+    "db:migrate": "psql \"$DATABASE_URL\" -f infra/migrations/001_create_users_table.sql",
+    "dev:all": "pnpm infra:up && pnpm db:migrate && pnpm dev:api",
     "dev:public": "node -e \"const net = require('net'); const checkPort = (port) => new Promise((resolve) => { const server = net.createServer(); server.listen(port, () => { server.close(() => resolve(true)); }); server.on('error', () => resolve(false)); }); checkPort(5173).then((isOpen) => { if (!isOpen) { console.log('⚠️  Port 5173 is not listening. Start webapp first:'); console.log('   pnpm dev:webapp'); process.exit(1); } console.log('✅ Port 5173 is listening'); console.log(''); console.log('📋 Next steps:'); console.log(''); console.log('1. Start ngrok tunnel:'); console.log('   ngrok http 5173'); console.log(''); console.log('2. Copy the public URL from ngrok (e.g., https://xxxx.ngrok-free.app)'); console.log(''); console.log('3. Add to .env:'); console.log('   TELEGRAM_WEBAPP_URL=https://xxxx.ngrok-free.app'); console.log(''); console.log('4. Start bot:'); console.log('   BOT_TOKEN=your_token pnpm --filter @tracked/bot start'); console.log(''); console.log('📖 Full runbook: docs/runbooks/telegram-dev.md'); });\"",
     "verify": "node tools/verify/verify.mjs",
     "verify:deep-imports": "node tools/verify/verify.mjs --deep-imports-only",
     "verify:workspace": "pnpm -r list --depth 0",
     "verify:infra": "echo 'Infra check: run docker compose -f infra/docker-compose.yml ps'",
-    "test:foundation": "node --test tools/tests/foundation/*.test.mjs",
-    "audit:architecture": "node tools/verify/architecture-freeze-audit.mjs"
+    "test:foundation": "node --test --test-concurrency=1 tools/tests/foundation/*.test.mjs",
+    "audit:architecture": "node tools/verify/architecture-freeze-audit.mjs",
+    "run:protocol": "node tools/dev/run-with-protocol.mjs --",
+    "x": "node tools/dev/run-with-timeout.mjs --timeout-ms=60000 --"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
