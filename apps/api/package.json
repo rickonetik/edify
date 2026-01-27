@@ -4,9 +4,10 @@
   "type": "module",
   "version": "0.0.0",
   "scripts": {
-    "dev": "pnpm build && pnpm start",
+    "dev": "pnpm build && pnpm start:env",
     "build": "tsc -p tsconfig.json",
-    "start": "node --env-file-if-exists=.env dist/apps/api/src/main.js",
+    "start": "node dist/apps/api/src/main.js",
+    "start:env": "node --env-file-if-exists=.env dist/apps/api/src/main.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
     "clean": "rm -rf dist"
@@ -19,6 +20,7 @@
     "@nestjs/swagger": "^7.4.2",
     "@tracked/shared": "workspace:*",
     "fastify": "^5.0.0",
+    "jsonwebtoken": "^9.0.3",
     "pg": "^8.17.2",
     "pino": "^9.5.0",
     "reflect-metadata": "^0.2.2",
@@ -27,6 +29,7 @@
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20.11.30",
     "@types/pg": "^8.16.0",
     "pino-pretty": "^13.0.0"

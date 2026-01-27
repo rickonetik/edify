@@ -24,7 +24,9 @@
     "verify:workspace": "pnpm -r list --depth 0",
     "verify:infra": "echo 'Infra check: run docker compose -f infra/docker-compose.yml ps'",
     "test:foundation": "node --test --test-concurrency=1 tools/tests/foundation/*.test.mjs",
-    "audit:architecture": "node tools/verify/architecture-freeze-audit.mjs"
+    "audit:architecture": "node tools/verify/architecture-freeze-audit.mjs",
+    "run:protocol": "node tools/dev/run-with-protocol.mjs --",
+    "x": "node tools/dev/run-with-timeout.mjs --timeout-ms=60000 --"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
