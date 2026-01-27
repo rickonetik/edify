@@ -88,4 +88,42 @@ export class UsersRepository {
       updatedAt: row.updated_at.toISOString(),
     };
   }
+
+  /**
+   * Find user by ID
+   *
+   * @param id - User ID (UUID)
+   * @returns User data or null if not found
+   */
+  async findById(id: string): Promise<ContractsV1.UserV1 | null> {
+    if (!this.pool) {
+      throw new Error('Database is disabled (SKIP_DB=1). Cannot perform database operations.');
+    }
+
+    const query = `
+      SELECT *
+      FROM users
+      WHERE id = $1
+    `;
+
+    const result = await this.pool.query<UserDbModel>(query, [id]);
+
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    const row = result.rows[0];
+
+    // Map to ContractsV1.UserV1
+    return {
+      id: row.id,
+      telegramUserId: row.telegram_user_id,
+      username: row.username ?? undefined,
+      firstName: row.first_name ?? undefined,
+      lastName: row.last_name ?? undefined,
+      avatarUrl: row.avatar_url ?? null,
+      createdAt: row.created_at.toISOString(),
+      updatedAt: row.updated_at.toISOString(),
+    };
+  }
 }

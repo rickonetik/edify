@@ -34,6 +34,11 @@ export class TelegramAuthController {
           type: 'object',
           description: 'User data',
         },
+        accessToken: {
+          type: 'string',
+          description: 'JWT access token',
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+        },
       },
     },
   })
@@ -57,8 +62,6 @@ export class TelegramAuthController {
       });
     }
 
-    const user = await this.telegramAuthService.verifyAndUpsert(validation.data.initData);
-
-    return { user };
+    return await this.telegramAuthService.verifyAndUpsert(validation.data.initData);
   }
 }

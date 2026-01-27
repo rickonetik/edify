@@ -21,6 +21,7 @@ export const AuthTelegramRequestV1Schema = z.object({
  */
 export interface AuthTelegramResponseV1 {
   user: UserV1;
+  accessToken: string;
 }
 
 /**
@@ -28,4 +29,5 @@ export interface AuthTelegramResponseV1 {
  */
 export const AuthTelegramResponseV1Schema = z.object({
   user: UserV1Schema,
+  accessToken: z.string().min(1),
 });
