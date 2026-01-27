@@ -82,28 +82,28 @@ function main() {
     checks.push(
       runCheck(
         'No domain/ layer in webapp',
-        "rg 'domain/' -n apps/webapp/src --glob '!**/node_modules/**' --glob '!**/dist/**' -t ts -t tsx",
+        "rg 'domain/' -n apps/webapp/src --glob '!**/node_modules/**' --glob '!**/dist/**' -t ts",
         0,
       ),
     );
     checks.push(
       runCheck(
         'No repositories/ layer in webapp',
-        "rg 'repositories/' -n apps/webapp/src --glob '!**/node_modules/**' --glob '!**/dist/**' -t ts -t tsx",
+        "rg 'repositories/' -n apps/webapp/src --glob '!**/node_modules/**' --glob '!**/dist/**' -t ts",
         0,
       ),
     );
     checks.push(
       runCheck(
         'No services/ layer in webapp',
-        "rg 'services/' -n apps/webapp/src --glob '!**/node_modules/**' --glob '!**/dist/**' -t ts -t tsx",
+        "rg 'services/' -n apps/webapp/src --glob '!**/node_modules/**' --glob '!**/dist/**' -t ts",
         0,
       ),
     );
     checks.push(
       runCheck(
         'No universal abstractions (EventBus, Mediator, Repository base, BaseService)',
-        "rg 'EventBus|Mediator|Repository.*base|BaseService' -n apps --glob '!**/node_modules/**' --glob '!**/dist/**' -t ts -t tsx",
+        "rg 'EventBus|Mediator|Repository.*base|BaseService' -n apps --glob '!**/node_modules/**' --glob '!**/dist/**' -t ts",
         0,
       ),
     );
@@ -137,10 +137,20 @@ function main() {
     // Check for duplicate error codes, but exclude swagger examples
     // Only check actual definitions: export enum, const declarations, or assignments
     // Exclude lines containing 'schema:', 'example:', or '@ApiResponse' (swagger decorators)
-    const output = execSync(
-      "rg 'export enum ErrorCodes|export const ErrorCodes|ErrorCodes\\s*=|VALIDATION_ERROR\\s*=|INTERNAL_ERROR\\s*=' -n apps --glob '!**/node_modules/**' --glob '!**/dist/**' --glob '!**/*.test.*' --glob '!**/*.spec.*' -t ts -t tsx",
-      { encoding: 'utf-8', stdio: 'pipe' },
-    );
+    let output = '';
+    try {
+      output = execSync(
+        "rg 'export enum ErrorCodes|export const ErrorCodes|ErrorCodes\\s*=|VALIDATION_ERROR\\s*=|INTERNAL_ERROR\\s*=' -n apps --glob '!**/node_modules/**' --glob '!**/dist/**' --glob '!**/*.test.*' --glob '!**/*.spec.*' -t ts",
+        { encoding: 'utf-8', stdio: 'pipe' },
+      );
+    } catch (err) {
+      // Exit code 1 from rg means "no matches" - that's success for our checks
+      if (err.status === 1) {
+        output = '';
+      } else {
+        throw err;
+      }
+    }
 
     // Split output into lines and check context
     const allLines = output.trim().split('\n');
@@ -207,7 +217,7 @@ function main() {
     runCheck(
       'No deep imports from @tracked/shared/src',
       tool === 'rg'
-        ? "rg '@tracked/shared/src' -n --glob '!**/node_modules/**' --glob '!**/dist/**' -t ts -t tsx -t js -t jsx"
+        ? "rg '@tracked/shared/src' -n --glob '!**/node_modules/**' --glob '!**/dist/**' -t ts -t js"
         : "grep -R '@tracked/shared/src' . --include='*.ts' --include='*.tsx' --include='*.js' --include='*.jsx' --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=.git -n",
       0,
     ),

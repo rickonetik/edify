@@ -38,7 +38,7 @@ export class HealthController {
         statusCode: 500,
         code: 'INTERNAL_ERROR',
         message: 'Internal Server Error',
-        traceId: 'a4f0c291-af45-47ca-ae9d-9a54a6e59b93',
+        requestId: 'a4f0c291-af45-47ca-ae9d-9a54a6e59b93',
       },
     },
   })
@@ -57,7 +57,7 @@ export class HealthController {
         statusCode: 400,
         code: 'VALIDATION_ERROR',
         message: 'Validation failed',
-        traceId: 'test-123',
+        requestId: 'test-123',
         details: ['field1 is required', 'field2 must be a string'],
       },
     },

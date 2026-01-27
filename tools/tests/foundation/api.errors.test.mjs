@@ -2,7 +2,7 @@
 
 /**
  * Foundation Smoke Test: API Error Format
- * Tests: 404 error format, 400 validation error format, traceId consistency
+ * Tests: 404 error format, 400 validation error format, requestId consistency
  * 
  * This test is deterministic: it builds and starts the API itself,
  * waits for the port to be available, and cleans up after itself.
@@ -63,10 +63,23 @@ async function startApi() {
       reject(new Error(`API startup timeout after ${STARTUP_TIMEOUT}ms`));
     }, STARTUP_TIMEOUT);
 
+    // Use TELEGRAM_BOT_TOKEN from process.env (set in .env or CI secrets)
+    // If not set, use test token (for local development without .env)
+    // Foundation tests don't require DB, so set SKIP_DB=1
+    const processEnv = {
+      ...process.env,
+      API_PORT: String(API_PORT),
+      NODE_ENV: 'test',
+      SKIP_DB: '1',
+    };
+    if (!processEnv.TELEGRAM_BOT_TOKEN) {
+      processEnv.TELEGRAM_BOT_TOKEN = '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11';
+    }
+
     apiProcess = spawn('pnpm', ['--filter', '@tracked/api', 'start'], {
       cwd,
       stdio: 'pipe',
-      env: { ...process.env, API_PORT: String(API_PORT), NODE_ENV: 'development' },
+      env: processEnv,
     });
 
     let stderr = '';
@@ -97,8 +110,22 @@ async function startApi() {
 async function stopApi() {
   if (apiProcess) {
     apiProcess.kill('SIGTERM');
-    await once(apiProcess, 'exit').catch(() => {});
+    try {
+      await Promise.race([
+        once(apiProcess, 'exit'),
+        new Promise((resolve) => setTimeout(resolve, 2000)),
+      ]);
+    } catch {
+      // Ignore errors
+    }
+    // Force kill if still running
+    if (apiProcess && !apiProcess.killed) {
+      apiProcess.kill('SIGKILL');
+      await once(apiProcess, 'exit').catch(() => {});
+    }
     apiProcess = null;
+    // Wait a bit for port to be released
+    await new Promise((resolve) => setTimeout(resolve, 500));
   }
 }
 
@@ -123,7 +150,7 @@ test('GET /nope returns 404 with unified error format', async () => {
   const body = await response.json();
   
   // Check unified error format
-  if (!body.statusCode || !body.code || !body.message || !body.traceId) {
+  if (!body.statusCode || !body.code || !body.message || !body.requestId) {
     throw new Error(`Invalid error response format: ${JSON.stringify(body)}`);
   }
 
@@ -141,9 +168,9 @@ test('GET /nope returns 404 with unified error format', async () => {
     throw new Error('Missing x-request-id header');
   }
 
-  // traceId should match x-request-id
-  if (body.traceId !== requestId) {
-    throw new Error(`traceId (${body.traceId}) does not match x-request-id (${requestId})`);
+  // requestId should match x-request-id
+  if (body.requestId !== requestId) {
+    throw new Error(`requestId (${body.requestId}) does not match x-request-id (${requestId})`);
   }
 });
 
@@ -157,7 +184,7 @@ test('GET /health/400 returns 400 with validation error format', async () => {
   const body = await response.json();
   
   // Check unified error format
-  if (!body.statusCode || !body.code || !body.message || !body.traceId) {
+  if (!body.statusCode || !body.code || !body.message || !body.requestId) {
     throw new Error(`Invalid error response format: ${JSON.stringify(body)}`);
   }
 
@@ -180,8 +207,8 @@ test('GET /health/400 returns 400 with validation error format', async () => {
     throw new Error('Missing x-request-id header');
   }
 
-  // traceId should match x-request-id
-  if (body.traceId !== requestId) {
-    throw new Error(`traceId (${body.traceId}) does not match x-request-id (${requestId})`);
+  // requestId should match x-request-id
+  if (body.requestId !== requestId) {
+    throw new Error(`requestId (${body.requestId}) does not match x-request-id (${requestId})`);
   }
 });

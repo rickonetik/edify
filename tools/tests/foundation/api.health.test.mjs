@@ -2,7 +2,7 @@
 
 /**
  * Foundation Smoke Test: API Health Endpoint
- * Tests: /health response format, x-request-id header, traceId
+ * Tests: /health response format, x-request-id header, requestId
  * 
  * This test is deterministic: it builds and starts the API itself,
  * waits for the port to be available, and cleans up after itself.
@@ -63,10 +63,23 @@ async function startApi() {
       reject(new Error(`API startup timeout after ${STARTUP_TIMEOUT}ms`));
     }, STARTUP_TIMEOUT);
 
+    // Use TELEGRAM_BOT_TOKEN from process.env (set in .env or CI secrets)
+    // If not set, use test token (for local development without .env)
+    // Foundation tests don't require DB, so set SKIP_DB=1
+    const processEnv = {
+      ...process.env,
+      API_PORT: String(API_PORT),
+      NODE_ENV: 'test',
+      SKIP_DB: '1',
+    };
+    if (!processEnv.TELEGRAM_BOT_TOKEN) {
+      processEnv.TELEGRAM_BOT_TOKEN = '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11';
+    }
+
     apiProcess = spawn('pnpm', ['--filter', '@tracked/api', 'start'], {
       cwd,
       stdio: 'pipe',
-      env: { ...process.env, API_PORT: String(API_PORT), NODE_ENV: 'development' },
+      env: processEnv,
     });
 
     let stderr = '';
@@ -97,8 +110,22 @@ async function startApi() {
 async function stopApi() {
   if (apiProcess) {
     apiProcess.kill('SIGTERM');
-    await once(apiProcess, 'exit').catch(() => {});
+    try {
+      await Promise.race([
+        once(apiProcess, 'exit'),
+        new Promise((resolve) => setTimeout(resolve, 2000)),
+      ]);
+    } catch {
+      // Ignore errors
+    }
+    // Force kill if still running
+    if (apiProcess && !apiProcess.killed) {
+      apiProcess.kill('SIGKILL');
+      await once(apiProcess, 'exit').catch(() => {});
+    }
     apiProcess = null;
+    // Wait a bit for port to be released
+    await new Promise((resolve) => setTimeout(resolve, 500));
   }
 }
 

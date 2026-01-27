@@ -6,7 +6,7 @@ Swagger UI доступен в dev-режиме по адресу /docs.
 
 ## Использование
 
-1. Запустить API в dev: `NODE_ENV=development pnpm --filter @tracked/api start`
+1. Запустить API в dev: `pnpm --filter @tracked/shared build && pnpm --filter @tracked/api dev`
 2. Открыть http://localhost:3001/docs
 3. Просмотреть доступные endpoints и их документацию
 
@@ -24,4 +24,10 @@ Swagger UI доступен в dev-режиме по адресу /docs.
 }
 ```
 
-Коды ошибок см. в `packages/shared/src/errors/codes.ts`.
+Коды ошибок: см. реализацию в `packages/shared` (internal); импортировать только из `@tracked/shared`.
+
+**Пример импорта**:
+
+```typescript
+import { ErrorCodes } from '@tracked/shared';
+```
