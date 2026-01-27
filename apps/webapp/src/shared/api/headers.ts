@@ -1,3 +1,5 @@
+import { getAccessToken } from '../auth/tokenStorage.js';
+
 /**
  * Request headers utilities
  */
@@ -10,10 +12,16 @@ export function createRequestId(): string {
 }
 
 /**
- * Get authentication headers (stub for EPIC 3)
- * @returns Empty object for now, will be implemented in EPIC 3
+ * Get authentication headers
+ * @returns Authorization header with Bearer token if available, otherwise empty object
  */
 export async function getAuthHeaders(): Promise<Record<string, string>> {
-  // TODO: Implement in EPIC 3
-  return {};
+  const token = getAccessToken();
+  if (!token) {
+    return {};
+  }
+
+  return {
+    authorization: `Bearer ${token}`,
+  };
 }
