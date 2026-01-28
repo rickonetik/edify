@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 export type ErrorCode =
   | 'UNAUTHORIZED'
   | 'FORBIDDEN'
@@ -23,5 +25,27 @@ export type ErrorResponse = {
   error: ErrorPayload;
   requestId: string;
 };
+
+export type ApiErrorV1 = {
+  code: string;
+  message: string;
+  requestId: string;
+  details?: unknown;
+};
+
+export type ApiErrorResponseV1 = {
+  error: ApiErrorV1;
+};
+
+export const ApiErrorV1Schema = z.object({
+  code: z.string(),
+  message: z.string(),
+  requestId: z.string(),
+  details: z.unknown().optional(),
+});
+
+export const ApiErrorResponseV1Schema = z.object({
+  error: ApiErrorV1Schema,
+});
 
 export type ApiOk<T> = { data: T; requestId: string };
