@@ -1,5 +1,7 @@
 # Repository Workflow
 
+> **📖 Project Context**: Полный контекст проекта (версии, команды, токены, окружения) см. в [PROJECT_CONTEXT.md](../../PROJECT_CONTEXT.md)
+
 ## Workspace Verification
 
 To list all packages in the workspace, use:
@@ -48,7 +50,7 @@ See [Quality Gates](./quality-gates.md) for detailed information.
 rg "@tracked/shared/src" -n
 ```
 
-Должно вернуть пустой результат (0 matches). Deep imports запрещены, используйте только `@tracked/shared`.
+Должно вернуть пустой результат (0 matches). Deep imports запрещены: см. реализацию в `packages/shared` (internal); импортировать только из `@tracked/shared`.
 
 ## Branch Naming
 
@@ -90,3 +92,12 @@ Workflow выполняет:
 При создании PR в GitHub автоматически подставляется шаблон из `.github/PULL_REQUEST_TEMPLATE.md`.
 
 Шаблон должен быть заполнен перед merge.
+
+## Docs Consistency Checklist
+
+При обновлении документации проверьте:
+
+- ✅ **No deep import examples** — нет примеров импортов вида `@tracked/shared/src/*`
+- ✅ **All commands copy-paste runnable** — все команды совпадают с scripts из `package.json`
+- ✅ **Min supported browsers pinned** — явно указан минимум iOS/Safari/WebView
+- ✅ **Epic status updated** — актуальный статус EPIC'ов (merged/in progress)

@@ -80,8 +80,8 @@ Telegram Mini App для обучения (LMS) с интеграцией бот
 
 ### Prerequisites
 
-- Node.js 20+
-- pnpm 9.0.0+
+- Node.js v25.2.1 (project pinned, см. [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md))
+- pnpm 9.15.4 (закреплено в `packageManager`)
 - Docker Desktop (для локальной инфраструктуры)
 
 ### Installation
@@ -105,8 +105,8 @@ pnpm verify
 pnpm dev
 
 # Или отдельно:
-pnpm --filter @tracked/api dev
 pnpm --filter @tracked/webapp dev
+pnpm --filter @tracked/shared build && pnpm --filter @tracked/api dev
 pnpm --filter @tracked/bot dev
 ```
 
@@ -162,10 +162,10 @@ tracked-lms/
 
 ### Package Level
 
-- `pnpm --filter @tracked/api <command>`
-- `pnpm --filter @tracked/webapp <command>`
-- `pnpm --filter @tracked/bot <command>`
-- `pnpm --filter @tracked/shared <command>`
+- `pnpm --filter @tracked/webapp dev` — запустить webapp
+- `pnpm --filter @tracked/shared build && pnpm --filter @tracked/api dev` — запустить API (требует сборки shared)
+- `pnpm --filter @tracked/bot dev` — запустить bot
+- `pnpm --filter @tracked/shared build` — собрать shared пакет
 
 ## Quality Gates
 
@@ -178,7 +178,7 @@ pnpm verify
 Проверяет:
 
 - ✅ Workspace integrity (4 пакета)
-- ✅ Deep imports (запрещены `@tracked/shared/src/*`)
+- ✅ Deep imports (запрещены: см. реализацию в `packages/shared` (internal); импортировать только из `@tracked/shared`)
 - ✅ Lint (errors блокируют, warnings OK)
 - ✅ Typecheck
 - ✅ Build
@@ -187,6 +187,7 @@ pnpm verify
 
 ## Documentation
 
+- **[Project Context](./PROJECT_CONTEXT.md)** — полный контекст проекта (SSoT)
 - [Repository Workflow](./docs/runbooks/repo-workflow.md)
 - [Quality Gates](./docs/runbooks/quality-gates.md)
 - [Local Infrastructure](./docs/runbooks/local-infra.md)

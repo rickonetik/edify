@@ -30,10 +30,11 @@ import { PaginationQuery, Paginated } from '@tracked/shared';
 
 ### ❌ Do NOT import from `src/`
 
-**Forbidden:**
+**Forbidden** (НЕ КОПИРУЙТЕ ЭТУ СТРОКУ):
 
-```typescript
-import { something } from '@tracked/shared/src/env/schemas'; // ❌
+```text
+НЕ КОПИРУЙТЕ ЭТУ СТРОКУ — анти-пример
+import { something } from '@tracked/shared/<do-not-import>/env/schemas';
 ```
 
 **Correct:**
