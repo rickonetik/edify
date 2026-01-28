@@ -18,6 +18,9 @@ pnpm --filter @tracked/api start
 # Or: pnpm --filter @tracked/api dev
 ```
 
+**Note:** `/docs` доступен только в dev при `SWAGGER_ENABLED=1`.
+В prod `/docs` всегда выключен (404/403 — ожидаемо).
+
 ### Test /health
 
 ```bash
