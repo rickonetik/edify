@@ -1,9 +1,12 @@
 import type { ErrorCode, ErrorPayload } from '@tracked/shared';
 
+// Local error code for webapp (not in shared contracts)
+export type LocalErrorCode = 'UNEXPECTED_RESPONSE';
+
 export class ApiClientError extends Error {
   name = 'ApiClientError' as const;
   status: number;
-  code?: ErrorCode;
+  code?: ErrorCode | LocalErrorCode;
   payload?: ErrorPayload;
   requestId?: string;
 
@@ -11,7 +14,7 @@ export class ApiClientError extends Error {
     message: string,
     status: number,
     options?: {
-      code?: ErrorCode;
+      code?: ErrorCode | LocalErrorCode;
       payload?: ErrorPayload;
       requestId?: string;
     },

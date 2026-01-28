@@ -43,6 +43,8 @@ VITE_USE_MSW=true pnpm --filter @tracked/webapp dev
 - Все запросы перехватываются MSW handlers
 - Данные из `apps/webapp/src/shared/msw/data.ts`
 
+**Safari/WebView fallback:** Если MSW не активен (Service Worker не поддерживается, например в Safari или встроенном браузере Cursor) и API возвращает HTML (SPA fallback), webapp автоматически использует моки из `apps/webapp/src/shared/msw/data.ts`. Это работает только в DEV режиме при `VITE_USE_MSW=true` и позволяет экранам работать даже когда MSW не запустился.
+
 ### С реальным API
 
 ```bash
