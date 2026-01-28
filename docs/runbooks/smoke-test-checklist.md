@@ -60,6 +60,7 @@ curl -i http://localhost:3001/health/400
 ### Test /docs in Development
 
 ```bash
+# Ensure SWAGGER_ENABLED=1 in apps/api/.env (copy from .env.example if needed)
 # Ensure NODE_ENV=development (default)
 curl -i http://localhost:3001/docs
 ```
