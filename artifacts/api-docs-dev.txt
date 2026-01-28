@@ -1,0 +1,7 @@
+HTTP/1.1 200 OK
+content-type: text/html
+content-length: 3126
+Date: Wed, 28 Jan 2026 20:35:14 GMT
+Connection: keep-alive
+Keep-Alive: timeout=72
+
