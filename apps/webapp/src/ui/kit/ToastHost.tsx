@@ -31,7 +31,7 @@ export function ToastHost() {
     <div
       style={{
         position: 'fixed',
-        top: 'calc(56px + var(--safe-top, 0px) + var(--spacing-6, 8px))',
+        top: 'calc(var(--topbar-h) + var(--safe-top, 0px) + var(--spacing-6, 8px))',
         left: 'var(--spacing-6, 8px)',
         right: 'var(--spacing-6, 8px)',
         zIndex: 'var(--z-toast, 3000)',

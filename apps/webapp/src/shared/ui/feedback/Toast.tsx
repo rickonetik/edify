@@ -66,7 +66,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           <div
             style={{
               position: 'fixed',
-              top: 'calc(56px + var(--safe-top, 0px) + var(--sp-3))',
+              top: 'calc(var(--topbar-h) + var(--safe-top, 0px) + var(--sp-3))',
               left: '50%',
               transform: 'translateX(-50%)',
               zIndex: 1000,

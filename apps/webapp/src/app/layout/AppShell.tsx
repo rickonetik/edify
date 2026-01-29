@@ -142,8 +142,8 @@ export function AppShell() {
           contain: 'paint',
           minHeight: '100%',
           width: '100%',
-          paddingTop: 'calc(56px + var(--safe-top, 0px))',
-          paddingBottom: 'calc(80px + var(--safe-bottom, 0px))',
+          paddingTop: 'calc(var(--topbar-h) + var(--safe-top, 0px))',
+          paddingBottom: 'calc(var(--tabs-h) + var(--safe-bottom, 0px))',
         }}
       >
         <Outlet />

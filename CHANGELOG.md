@@ -30,6 +30,19 @@ All notable changes to this project will be documented in this file.
 - **WebApp (mobile)** — Bottom tab bar no longer overlapped by main content: increased main `paddingBottom` to 80px + safe-area
 - **WebApp (mobile)** — Tab bar: `minHeight` instead of fixed height, `flex: 1` + centered icon/label per tab, proper centering in Telegram
 
+## [0.3.4.2] - 2026-01-29 - Tab bar safe-area, single source of truth (--tabs-h, --topbar-h)
+
+### Changed
+
+- **Layout tokens** — `--topbar-h: 56px` and `--tabs-h: 72px` in tokens.css; AppShell main uses them for paddingTop/paddingBottom
+- **BottomTabs** — Total height = `--tabs-h` + `--safe-bottom`; `paddingBottom: var(--safe-bottom)` so content area is never squeezed on iOS; ellipsis for long labels
+- **TopBar** — `minHeight: calc(var(--topbar-h) + var(--safe-top))`, `paddingTop: var(--safe-top)`; Toast/ToastHost use `var(--topbar-h)` for top offset
+
+### Fixed
+
+- Tab bar on iPhone: no icon/label clipping; panel does not sit on home indicator; no double safe-area gap
+- Single source of truth for bar heights so main padding always matches actual chrome height
+
 ## [0.2.2] - 2026-01-25 - WebApp UI Foundation (EPIC 1)
 
 ### Added

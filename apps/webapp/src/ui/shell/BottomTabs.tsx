@@ -16,7 +16,8 @@ export function BottomTabs() {
         bottom: 0,
         left: 0,
         right: 0,
-        minHeight: '56px',
+        /* Total height = content area (--tabs-h) + safe-area; content area is never squeezed */
+        minHeight: 'calc(var(--tabs-h) + var(--safe-bottom, 0px))',
         boxSizing: 'border-box',
         display: 'flex',
         alignItems: 'stretch',
@@ -26,7 +27,7 @@ export function BottomTabs() {
         WebkitBackdropFilter: 'var(--glass-blur)',
         borderTop: '1px solid var(--chrome-border)',
         paddingTop: 'var(--sp-2)',
-        paddingBottom: 'calc(var(--sp-2) + var(--safe-bottom, 0px))',
+        paddingBottom: 'var(--safe-bottom, 0px)',
         paddingLeft: 'var(--sp-2)',
         paddingRight: 'var(--sp-2)',
         zIndex: 1000,
@@ -60,7 +61,17 @@ export function BottomTabs() {
             }}
           >
             <span style={{ fontSize: isPrimary ? '22px' : '20px', lineHeight: 1 }}>{tab.icon}</span>
-            <span style={{ lineHeight: 1 }}>{tab.label}</span>
+            <span
+              style={{
+                lineHeight: 1,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                maxWidth: '100%',
+              }}
+            >
+              {tab.label}
+            </span>
           </NavLink>
         );
       })}

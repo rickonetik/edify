@@ -10,6 +10,10 @@
   /* Chrome (TopBar/BottomTabs) */
   --chrome-bg: rgba(255, 255, 255, 0.08);
   --chrome-border: rgba(255, 255, 255, 0.1);
+  /* TopBar height (content + safe-top is added separately on the bar) */
+  --topbar-h: 56px;
+  /* Bottom tab bar: content + internal padding only; total bar height = tabs-h + safe-bottom */
+  --tabs-h: 72px;
 
   /* Base Colors */
   --bg: #0b0d10;
