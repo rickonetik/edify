@@ -143,7 +143,7 @@ export function AppShell() {
           minHeight: '100%',
           width: '100%',
           paddingTop: 'calc(56px + var(--safe-top, 0px))',
-          paddingBottom: 'calc(60px + var(--safe-bottom, 0px))',
+          paddingBottom: 'calc(80px + var(--safe-bottom, 0px))',
         }}
       >
         <Outlet />

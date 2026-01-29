@@ -23,6 +23,13 @@ All notable changes to this project will be documented in this file.
 - Bot entrypoint: start script uses `dist/apps/bot/src/index.js` (correct build output)
 - ngrok ERR_NGROK_8012: run ngrok with `127.0.0.1:5173` instead of `localhost:5173` (IPv4 vs ::1)
 
+## [0.3.4.1] - 2026-01-29 - Mobile tab bar layout (Telegram Mini App)
+
+### Fixed
+
+- **WebApp (mobile)** — Bottom tab bar no longer overlapped by main content: increased main `paddingBottom` to 80px + safe-area
+- **WebApp (mobile)** — Tab bar: `minHeight` instead of fixed height, `flex: 1` + centered icon/label per tab, proper centering in Telegram
+
 ## [0.2.2] - 2026-01-25 - WebApp UI Foundation (EPIC 1)
 
 ### Added
