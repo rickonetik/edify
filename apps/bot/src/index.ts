@@ -1,13 +1,29 @@
-import { Bot } from 'grammy';
+import { Bot, InlineKeyboard } from 'grammy';
 import { BotEnvSchema, validateOrThrow } from '@tracked/shared';
 
 const env = validateOrThrow(BotEnvSchema, process.env);
 
+// Startup validation: TELEGRAM_WEBAPP_URL (required, https, no trailing slash)
+const raw = process.env.TELEGRAM_WEBAPP_URL;
+if (raw === undefined || raw.trim() === '') {
+  throw new Error(
+    'TELEGRAM_WEBAPP_URL is required (free ngrok URL; set it before starting the bot)',
+  );
+}
+const trimmed = raw.trim();
+const parsed = new URL(trimmed);
+if (parsed.protocol !== 'https:') {
+  throw new Error(`TELEGRAM_WEBAPP_URL must be https (got: ${trimmed})`);
+}
+const WEBAPP_URL = trimmed.replace(/\/+$/, '');
+
 const bot = new Bot(env.BOT_TOKEN);
 
-// Команда /start
+const openWebAppKb = new InlineKeyboard().webApp('Open WebApp', WEBAPP_URL);
+
+// Команда /start — inline-кнопка Open WebApp
 bot.command('start', async (ctx) => {
-  await ctx.reply('Edify bot is running. Use the Mini App button soon.');
+  await ctx.reply('Open the app:', { reply_markup: openWebAppKb });
 });
 
 // Обработка ошибок

@@ -1,5 +1,28 @@
 # Local Infrastructure Runbook
 
+## Infra baseline (v0.3.3+)
+
+**Compose file:** `infra/docker-compose.yml`
+
+**Always use:** `-f infra/docker-compose.yml --env-file .env` for any `docker compose` command. Without `--env-file .env` variables are unset and you get `invalid proto` or port/config drift.
+
+**Host ports:**
+
+| Service  | Port(s)             |
+| -------- | ------------------- |
+| Postgres | **5433** (not 5432) |
+| Redis    | 6379                |
+| MinIO    | 9000, 9001          |
+
+**Checks:**
+
+- Status: `docker compose -f infra/docker-compose.yml --env-file .env ps`
+- Postgres: `psql -U tracked -d tracked_lms` (or `-h localhost -p 5433` if needed)
+
+**Forbidden:** `docker compose up` (or `ps` / `config`) from repo root **without** `-f infra/docker-compose.yml --env-file .env` — leads to invalid config and environment mismatch.
+
+---
+
 ## Prerequisites
 
 - Docker Desktop installed and running
@@ -41,7 +64,7 @@ This will:
 ### Check Services Status
 
 ```bash
-docker compose -f infra/docker-compose.yml ps
+docker compose -f infra/docker-compose.yml --env-file .env ps
 ```
 
 All services should be `running` and `healthy`.
@@ -81,7 +104,7 @@ Should return: `PONG`
 ```bash
 pnpm infra:down
 # or manually:
-docker compose -f infra/docker-compose.yml down -v
+docker compose -f infra/docker-compose.yml --env-file .env down -v
 ```
 
 ## Clean Data (⚠️ Destructive)
@@ -89,7 +112,7 @@ docker compose -f infra/docker-compose.yml down -v
 To remove all volumes and data:
 
 ```bash
-docker compose -f infra/docker-compose.yml down -v
+docker compose -f infra/docker-compose.yml --env-file .env down -v
 ```
 
 Or remove specific volumes:
@@ -125,7 +148,7 @@ psql "$DATABASE_URL" -f infra/migrations/001_create_users_table.sql
 
 - Check Docker Desktop is running
 - Check ports are not already in use: `lsof -i :5433` (or other ports)
-- Check logs: `docker compose -f infra/docker-compose.yml logs <service-name>`
+- Check logs: `docker compose -f infra/docker-compose.yml --env-file .env logs <service-name>`
 - Run preflight check: `node tools/dev/preflight-db.mjs`
 
 ### Health checks failing

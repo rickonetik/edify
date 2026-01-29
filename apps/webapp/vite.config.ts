@@ -2,9 +2,15 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 
-export default defineConfig({
+const DEV_ALLOWED_HOSTS = ['.ngrok-free.dev', '.ngrok-free.app', '.ngrok-free.de'];
+
+export default defineConfig(({ mode }) => ({
   plugins: [react()],
-  server: { port: 5173, host: true },
+  server: {
+    port: 5173,
+    host: true,
+    ...(mode === 'development' ? { allowedHosts: DEV_ALLOWED_HOSTS } : {}),
+  },
   resolve: {
     alias: {
       // Use built dist in production, source in development
@@ -20,4 +26,4 @@ export default defineConfig({
       include: [/shared/, /node_modules/],
     },
   },
-});
+}));

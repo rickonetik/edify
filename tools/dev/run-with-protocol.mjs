@@ -31,6 +31,13 @@ while (cmdArgs.length > 0 && cmdArgs[0] === '--') {
 const timeoutMsArg = argv.find((a) => a.startsWith('--timeout-ms='));
 const timeoutMs = timeoutMsArg ? Number(timeoutMsArg.split('=')[1]) : 60000;
 
+// Don't pass --timeout-ms=* to the actual command (pnpm run:protocol -- --timeout-ms=600000 -- cmd)
+cmdArgs = cmdArgs.filter((a) => !a.startsWith('--timeout-ms='));
+// Strip any leading "--" left after filter (e.g. pnpm run:protocol -- --timeout-ms=600000 -- pnpm dev)
+while (cmdArgs.length > 0 && cmdArgs[0] === '--') {
+  cmdArgs = cmdArgs.slice(1);
+}
+
 if (cmdArgs.length === 0) {
   console.error('Usage: node tools/dev/run-with-protocol.mjs [--timeout-ms=60000] -- <cmd> <args...>');
   process.exit(2);

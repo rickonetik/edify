@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.4] - 2026-01-29 - Bot WebApp button, ngrok dev fixes (Story 3.4)
+
+### Added
+
+- **Bot (Story 3.4)** — `/start` returns inline button "Open WebApp" opening Mini App via `TELEGRAM_WEBAPP_URL`
+  - Startup validation: `TELEGRAM_WEBAPP_URL` required, must be https, trailing slash stripped
+  - Bot reads env from root `.env` (`--env-file-if-exists=../../.env`), entrypoint `dist/apps/bot/src/index.js`
+  - `apps/bot/.env.example`: `BOT_TOKEN`, `TELEGRAM_WEBAPP_URL`
+- **Runbooks** — Free ngrok workflow (Story 3.4), infra baseline (v0.3.3+), allowedHosts troubleshooting
+
+### Changed
+
+- **WebApp** — Vite dev: `server.allowedHosts` for `.ngrok-free.dev`, `.ngrok-free.app`, `.ngrok-free.de` (no "Blocked request" via ngrok)
+- **Protocol** — `run-with-protocol.mjs`: `--timeout-ms=*` and leading `--` no longer passed to command (long-running dev works)
+- **Local infra** — All `docker compose` examples use `--env-file .env`; Infra baseline section in runbook
+
+### Fixed
+
+- Bot entrypoint: start script uses `dist/apps/bot/src/index.js` (correct build output)
+- ngrok ERR_NGROK_8012: run ngrok with `127.0.0.1:5173` instead of `localhost:5173` (IPv4 vs ::1)
+
 ## [0.2.2] - 2026-01-25 - WebApp UI Foundation (EPIC 1)
 
 ### Added

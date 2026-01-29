@@ -38,8 +38,10 @@ Copy the public URL (e.g., `https://xxxx.ngrok-free.app`)
 
 ### Terminal C: Bot
 
+Create `apps/bot/.env` with `BOT_TOKEN=...` and `TELEGRAM_WEBAPP_URL=https://...` (no secrets in command line). Then:
+
 ```bash
-BOT_TOKEN=your_token_here pnpm --filter @tracked/bot start
+pnpm --filter @tracked/bot dev
 ```
 
 Bot should start and log: `Bot @your_bot_name started`
@@ -48,20 +50,63 @@ Bot should start and log: `Bot @your_bot_name started`
 
 ### Local `.env` (not committed)
 
+Root `.env` or **`apps/bot/.env`** (Story 3.4+) for bot:
+
 ```env
 BOT_TOKEN=your_bot_token_here
 TELEGRAM_WEBAPP_URL=https://xxxx.ngrok-free.app
 ```
 
-**Important**: `.env` is in `.gitignore`, never commit tokens or URLs.
+**Important**: `.env` is in `.gitignore`, never commit tokens or URLs. **Do not** pass `BOT_TOKEN=...` in the command line (visible in `pgrep`/`ps`).
 
-## Story 1.1 Placeholder
+## Free ngrok workflow (Story 3.4)
 
-On Story 1.1, we'll add a `web_app` button to the bot that opens `TELEGRAM_WEBAPP_URL`.
+1. **Ensure ngrok is not running twice** (otherwise ERR_NGROK_334):
 
-For now, the bot only responds to `/start` command.
+   ```bash
+   pnpm run:protocol -- pgrep -fl ngrok
+   ```
+
+   If any process is listed, stop it:
+
+   ```bash
+   pnpm run:protocol -- pkill ngrok
+   ```
+
+2. **Start WebApp tunnel** (long-running):
+
+   ```bash
+   pnpm run:protocol --timeout-ms=600000 -- ngrok http 5173
+   ```
+
+   Copy the **https** URL (it changes on free tier).
+
+3. **Store secrets in `apps/bot/.env`** (gitignored):
+
+   ```env
+   BOT_TOKEN=...
+   TELEGRAM_WEBAPP_URL=https://<your-ngrok-url>
+   ```
+
+   **Forbidden:** running with `BOT_TOKEN=...` in the command (token visible in process list).
+
+4. **Start bot:**
+
+   ```bash
+   pnpm run:protocol --timeout-ms=600000 -- pnpm --filter @tracked/bot dev
+   ```
+
+5. **Verify in Telegram:** `/start` → **Open WebApp** → WebApp opens.
+
+6. **When ngrok URL changes:** update `TELEGRAM_WEBAPP_URL` in `apps/bot/.env` and restart the bot (no WebApp code changes).
 
 ## Troubleshooting
+
+### "Blocked request. This host is not allowed. Add to server.allowedHosts"
+
+- Vite blocks requests when the `Host` header is not in the allowed list.
+- **Fix:** `apps/webapp/vite.config.ts` already allows ngrok in development via `server.allowedHosts`: `.ngrok-free.dev`, `.ngrok-free.app`, `.ngrok-free.de` (wildcard subdomains).
+- If you see this error, restart the WebApp dev server so it picks up the config.
 
 ### "invalid host header" / CORS
 
@@ -103,10 +148,9 @@ kill -9 <PID>
 
 1. Start webapp: `pnpm --filter @tracked/webapp dev`
 2. Start ngrok: `ngrok http 5173`
-3. Copy public URL to `.env`: `TELEGRAM_WEBAPP_URL=https://xxxx.ngrok-free.app`
-4. Start bot: `BOT_TOKEN=... pnpm --filter @tracked/bot start`
-5. Test in Telegram: Send `/start` to bot
-6. (Story 1.1) Click web_app button to open Mini App
+3. Copy public URL to `apps/bot/.env`: `TELEGRAM_WEBAPP_URL=https://xxxx.ngrok-free.app` (and `BOT_TOKEN=...`)
+4. Start bot: `pnpm --filter @tracked/bot dev` (env from `.env`, no token in command)
+5. Test in Telegram: Send `/start` → click **Open WebApp** → Mini App opens
 
 ## Helper Scripts
 
