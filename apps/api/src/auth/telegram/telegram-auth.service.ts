@@ -1,9 +1,15 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
-import { ContractsV1 } from '@tracked/shared';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
+import { ContractsV1, ErrorCodes } from '@tracked/shared';
 import { validateTelegramInitData, TelegramInitDataValidationError } from './telegram-init-data.js';
 import { UsersRepository } from '../../users/users.repository.js';
 import { ApiEnvSchema, validateOrThrow } from '@tracked/shared';
 import { JwtService } from '../session/jwt.service.js';
+import { AuditService } from '../../audit/audit.service.js';
 
 const env = validateOrThrow(ApiEnvSchema, process.env);
 
@@ -12,17 +18,23 @@ export class TelegramAuthService {
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly jwtService: JwtService,
+    private readonly auditService: AuditService,
   ) {}
 
   /**
    * Verify Telegram initData and upsert user
    *
    * @param initData - Raw initData string from Telegram WebApp
+   * @param traceId - Request trace id (x-request-id) for audit
    * @returns User data and access token
    * @throws {BadRequestException} On malformed initData or missing fields
    * @throws {UnauthorizedException} On invalid signature or expired auth_date
+   * @throws {ForbiddenException} When user is banned (USER_BANNED)
    */
-  async verifyAndUpsert(initData: string): Promise<ContractsV1.AuthTelegramResponseV1> {
+  async verifyAndUpsert(
+    initData: string,
+    traceId: string,
+  ): Promise<ContractsV1.AuthTelegramResponseV1> {
     try {
       // Validate initData
       const validated = validateTelegramInitData(
@@ -40,6 +52,23 @@ export class TelegramAuthService {
         avatarUrl: validated.avatarUrl,
       });
 
+      // Ban enforcement: do not issue token
+      if (user.bannedAt) {
+        await this.auditService.write({
+          actorUserId: user.id,
+          action: 'auth.blocked.banned',
+          entityType: 'user',
+          entityId: user.id,
+          traceId,
+          meta: {},
+        });
+        throw new ForbiddenException({
+          message: 'User is banned',
+          error: 'Forbidden',
+          code: ErrorCodes.USER_BANNED,
+        });
+      }
+
       // Generate access token
       // telegramUserId is always present after upsertByTelegramUserId
       if (!user.telegramUserId) {
@@ -52,6 +81,9 @@ export class TelegramAuthService {
 
       return { user, accessToken };
     } catch (error) {
+      if (error instanceof ForbiddenException) {
+        throw error;
+      }
       if (error instanceof TelegramInitDataValidationError) {
         if (error.code === 'MALFORMED') {
           throw new BadRequestException({

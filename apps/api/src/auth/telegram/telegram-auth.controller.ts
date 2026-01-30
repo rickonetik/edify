@@ -1,4 +1,5 @@
-import { Controller, Post, Body, BadRequestException, HttpCode } from '@nestjs/common';
+import crypto from 'node:crypto';
+import { Controller, Post, Body, BadRequestException, HttpCode, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { ContractsV1 } from '@tracked/shared';
 import { TelegramAuthService } from './telegram-auth.service.js';
@@ -50,8 +51,13 @@ export class TelegramAuthController {
     status: 401,
     description: 'Invalid signature or expired auth_date',
   })
+  @ApiResponse({
+    status: 403,
+    description: 'User is banned (USER_BANNED)',
+  })
   async telegramAuth(
     @Body() dto: ContractsV1.AuthTelegramRequestV1,
+    @Req() req: { traceId?: string },
   ): Promise<ContractsV1.AuthTelegramResponseV1> {
     // Validate request body
     const validation = ContractsV1.AuthTelegramRequestV1Schema.safeParse(dto);
@@ -62,6 +68,7 @@ export class TelegramAuthController {
       });
     }
 
-    return await this.telegramAuthService.verifyAndUpsert(validation.data.initData);
+    const traceId = req.traceId ?? crypto.randomUUID();
+    return await this.telegramAuthService.verifyAndUpsert(validation.data.initData, traceId);
   }
 }

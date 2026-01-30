@@ -13,6 +13,8 @@ export interface UserV1 {
   avatarUrl?: UrlString | null;
   createdAt: IsoDateTime;
   updatedAt: IsoDateTime;
+  /** Set when user is banned (internal/enforcement); optional in response */
+  bannedAt?: IsoDateTime | null;
 }
 
 /**
@@ -27,4 +29,5 @@ export const UserV1Schema = z.object({
   avatarUrl: z.string().nullable().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  bannedAt: z.string().nullable().optional(),
 });

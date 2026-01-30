@@ -26,51 +26,63 @@ export class ApiExceptionFilter implements ExceptionFilter {
     let code: string;
     let details: unknown | undefined;
 
+    type ExceptionResp = {
+      message?: unknown;
+      code?: string;
+      errors?: unknown;
+      details?: unknown;
+    };
+
     if (exception instanceof HttpException) {
       statusCode = exception.getStatus();
       const exceptionResponse = exception.getResponse();
+      let resp: ExceptionResp | null = null;
 
       if (typeof exceptionResponse === 'string') {
         message = exceptionResponse;
       } else if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
-        const resp = exceptionResponse as any;
+        resp = exceptionResponse as ExceptionResp;
 
         // Для 400 (валидация) прокидываем details, если есть
         if (statusCode === HttpStatus.BAD_REQUEST && Array.isArray(resp.message)) {
           message = 'Validation failed';
           details = resp.message;
         } else if (statusCode === HttpStatus.BAD_REQUEST && resp.errors) {
-          message = resp.message || 'Validation failed';
+          message = (resp.message as string) || 'Validation failed';
           details = resp.errors;
         } else if (statusCode === HttpStatus.BAD_REQUEST && resp.details) {
-          message = resp.message || 'Validation failed';
+          message = (resp.message as string) || 'Validation failed';
           details = resp.details;
         } else {
-          message = resp.message || exception.message || 'Bad Request';
+          message = (resp.message as string) || exception.message || 'Bad Request';
         }
       } else {
         message = exception.message || 'Bad Request';
       }
 
-      // Маппинг статуса на код
-      switch (statusCode) {
-        case HttpStatus.BAD_REQUEST:
-          code = ErrorCodes.VALIDATION_ERROR;
-          break;
-        case HttpStatus.UNAUTHORIZED:
-          code = ErrorCodes.UNAUTHORIZED;
-          break;
-        case HttpStatus.FORBIDDEN:
-          code = ErrorCodes.FORBIDDEN;
-          break;
-        case HttpStatus.NOT_FOUND:
-          code = ErrorCodes.NOT_FOUND;
-          break;
-        case HttpStatus.CONFLICT:
-          code = ErrorCodes.CONFLICT;
-          break;
-        default:
-          code = ErrorCodes.INTERNAL_ERROR;
+      // Custom code from exception (e.g. USER_BANNED for 403)
+      if (resp !== null && typeof resp.code === 'string' && resp.code.length > 0) {
+        code = resp.code;
+      } else {
+        switch (statusCode) {
+          case HttpStatus.BAD_REQUEST:
+            code = ErrorCodes.VALIDATION_ERROR;
+            break;
+          case HttpStatus.UNAUTHORIZED:
+            code = ErrorCodes.UNAUTHORIZED;
+            break;
+          case HttpStatus.FORBIDDEN:
+            code = ErrorCodes.FORBIDDEN;
+            break;
+          case HttpStatus.NOT_FOUND:
+            code = ErrorCodes.NOT_FOUND;
+            break;
+          case HttpStatus.CONFLICT:
+            code = ErrorCodes.CONFLICT;
+            break;
+          default:
+            code = ErrorCodes.INTERNAL_ERROR;
+        }
       }
     } else {
       // Не HttpException - внутренняя ошибка

@@ -11,6 +11,25 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: tracked
+          POSTGRES_PASSWORD: tracked
+          POSTGRES_DB: tracked
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U tracked -d tracked"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      DATABASE_URL: postgresql://tracked:tracked@localhost:5432/tracked
+      JWT_ACCESS_SECRET: test-secret
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -48,3 +67,9 @@ jobs:
 
       - name: Verify
         run: pnpm verify
+
+      - name: Foundation tests
+        run: pnpm test:foundation
+
+      - name: Architecture audit
+        run: pnpm audit:architecture

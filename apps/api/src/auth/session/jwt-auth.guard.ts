@@ -1,18 +1,38 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import crypto from 'node:crypto';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  UnauthorizedException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { JwtService } from './jwt.service.js';
+import { UsersRepository } from '../../users/users.repository.js';
+import { AuditService } from '../../audit/audit.service.js';
+import { ErrorCodes } from '@tracked/shared';
 
 /**
  * JWT Auth Guard
  *
- * Validates JWT token from Authorization header and sets req.user
+ * Validates JWT token from Authorization header, loads user, enforces ban.
+ * Sets req.user on success. On banned user: 403 USER_BANNED + audit.
  */
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly usersRepository: UsersRepository,
+    private readonly auditService: AuditService,
+  ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest() as {
+      headers?: { authorization?: string };
+      traceId?: string;
+      user?: { userId: string; telegramUserId: string };
+    };
+
     try {
-      const request: any = context.switchToHttp().getRequest();
       const authHeader = request.headers?.authorization;
 
       if (!authHeader || typeof authHeader !== 'string') {
@@ -22,7 +42,6 @@ export class JwtAuthGuard implements CanActivate {
         });
       }
 
-      // Extract token from "Bearer <token>"
       const parts = authHeader.split(' ');
       if (parts.length !== 2 || parts[0] !== 'Bearer') {
         throw new UnauthorizedException({
@@ -39,10 +58,33 @@ export class JwtAuthGuard implements CanActivate {
         });
       }
 
-      // Verify token (throws UnauthorizedException on error)
       const payload = this.jwtService.verifyAccessToken(token);
 
-      // Set user on request
+      const user = await this.usersRepository.findById(payload.userId);
+      if (!user) {
+        throw new UnauthorizedException({
+          message: 'User not found',
+          error: 'Unauthorized',
+        });
+      }
+
+      if (user.bannedAt) {
+        const traceId = request.traceId ?? crypto.randomUUID();
+        await this.auditService.write({
+          actorUserId: user.id,
+          action: 'request.blocked.banned',
+          entityType: 'user',
+          entityId: user.id,
+          traceId,
+          meta: {},
+        });
+        throw new ForbiddenException({
+          message: 'User is banned',
+          error: 'Forbidden',
+          code: ErrorCodes.USER_BANNED,
+        });
+      }
+
       request.user = {
         userId: payload.userId,
         telegramUserId: payload.telegramUserId,
@@ -50,11 +92,9 @@ export class JwtAuthGuard implements CanActivate {
 
       return true;
     } catch (error) {
-      // Ensure all errors are converted to UnauthorizedException (never leak raw errors)
-      if (error instanceof UnauthorizedException) {
+      if (error instanceof UnauthorizedException || error instanceof ForbiddenException) {
         throw error;
       }
-      // Catch any unexpected errors and convert to UnauthorizedException
       throw new UnauthorizedException({
         message: 'Invalid token',
         error: 'Unauthorized',

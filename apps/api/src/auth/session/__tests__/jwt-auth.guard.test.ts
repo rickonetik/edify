@@ -8,13 +8,30 @@ import { JwtService } from '../jwt.service.js';
 // Mock env before importing
 const originalEnv = process.env;
 
+const mockUserId = '123e4567-e89b-12d3-a456-426614174000';
+const mockTelegramUserId = '123456789';
+
 describe('JwtAuthGuard', () => {
   let guard: JwtAuthGuard;
   let jwtService: JwtService;
   const TEST_SECRET = 'test-secret-key-for-jwt';
 
+  const mockUsersRepository = {
+    findById: async (id: string) =>
+      id === mockUserId
+        ? {
+            id: mockUserId,
+            telegramUserId: mockTelegramUserId,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            bannedAt: null,
+          }
+        : null,
+  };
+
+  const mockAuditService = { write: async () => {} };
+
   beforeEach(() => {
-    // Reset env
     process.env = {
       ...originalEnv,
       JWT_ACCESS_SECRET: TEST_SECRET,
@@ -22,16 +39,18 @@ describe('JwtAuthGuard', () => {
       NODE_ENV: 'test',
     };
     jwtService = new JwtService();
-    guard = new JwtAuthGuard(jwtService);
+    guard = new JwtAuthGuard(jwtService, mockUsersRepository as any, mockAuditService as any);
   });
 
   function createMockContext(headers: Record<string, string>): ExecutionContext {
     const request: {
       headers: Record<string, string>;
       user?: { userId: string; telegramUserId: string };
+      traceId?: string;
     } = {
       headers,
       user: undefined,
+      traceId: 'test-trace-id',
     };
 
     return {
@@ -43,21 +62,21 @@ describe('JwtAuthGuard', () => {
   }
 
   describe('canActivate', () => {
-    it('should allow request with valid Bearer token', () => {
+    it('should allow request with valid Bearer token', async () => {
       const token = jwtService.signAccessToken({
-        userId: '123e4567-e89b-12d3-a456-426614174000',
-        telegramUserId: '123456789',
+        userId: mockUserId,
+        telegramUserId: mockTelegramUserId,
       });
 
       const context = createMockContext({
         authorization: `Bearer ${token}`,
       });
 
-      const result = guard.canActivate(context);
+      const result = await guard.canActivate(context);
 
       assert.strictEqual(result, true);
       const request = context.switchToHttp().getRequest();
-      assert.strictEqual(request.user.userId, '123e4567-e89b-12d3-a456-426614174000');
+      assert.strictEqual(request.user.userId, mockUserId);
       assert.strictEqual(request.user.telegramUserId, '123456789');
     });
 

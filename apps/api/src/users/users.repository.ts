@@ -13,6 +13,8 @@ interface UserDbModel {
   avatar_url: string | null;
   created_at: Date;
   updated_at: Date;
+  banned_at: Date | null;
+  ban_reason: string | null;
 }
 
 /**
@@ -86,6 +88,7 @@ export class UsersRepository {
       avatarUrl: row.avatar_url ?? null,
       createdAt: row.created_at.toISOString(),
       updatedAt: row.updated_at.toISOString(),
+      bannedAt: row.banned_at?.toISOString() ?? null,
     };
   }
 
@@ -124,6 +127,7 @@ export class UsersRepository {
       avatarUrl: row.avatar_url ?? null,
       createdAt: row.created_at.toISOString(),
       updatedAt: row.updated_at.toISOString(),
+      bannedAt: row.banned_at?.toISOString() ?? null,
     };
   }
 }
