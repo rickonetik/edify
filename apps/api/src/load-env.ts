@@ -1,8 +1,7 @@
 /**
  * Load .env from repo root before any other module.
  * Must be imported first in main.ts so DATABASE_URL etc. are set before AppModule loads.
- * Prefer process.cwd()/.env when running from repo root (e.g. node apps/api/dist/...).
- * NODE_ENV and SWAGGER_ENABLED are preserved if already set (e.g. by tests or process manager).
+ * Explicit env vars (e.g. NODE_ENV, SWAGGER_ENABLED from test runner) must not be overwritten by .env.
  */
 import { config } from 'dotenv';
 import { resolve, dirname } from 'node:path';
@@ -12,13 +11,16 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const fromCwd = resolve(process.cwd(), '.env');
 const fromDirname = resolve(__dirname, '../../../../../../.env');
 
-const preserveNodeEnv = process.env.NODE_ENV;
-const preserveSwaggerEnabled = process.env.SWAGGER_ENABLED;
+// Save before config() so .env cannot override explicit test/process-manager values
+const hadNodeEnv = process.env.NODE_ENV !== undefined;
+const hadSwaggerEnabled = process.env.SWAGGER_ENABLED !== undefined;
+const savedNodeEnv = process.env.NODE_ENV;
+const savedSwaggerEnabled = process.env.SWAGGER_ENABLED;
 
 config({ path: fromCwd });
 if (!process.env.DATABASE_URL) {
   config({ path: fromDirname });
 }
 
-if (preserveNodeEnv !== undefined) process.env.NODE_ENV = preserveNodeEnv;
-if (preserveSwaggerEnabled !== undefined) process.env.SWAGGER_ENABLED = preserveSwaggerEnabled;
+if (hadNodeEnv) process.env.NODE_ENV = savedNodeEnv;
+if (hadSwaggerEnabled) process.env.SWAGGER_ENABLED = savedSwaggerEnabled;

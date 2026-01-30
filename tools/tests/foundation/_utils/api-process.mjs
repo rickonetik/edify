@@ -94,38 +94,26 @@ export async function startApi({
       reject(new Error(`API startup timeout after ${STARTUP_TIMEOUT}ms`));
     }, STARTUP_TIMEOUT);
 
-    // Build processEnv with all defaults
-    // Note: We need PATH from process.env for pnpm to work, but we explicitly
-    // exclude SWAGGER_ENABLED to avoid contamination from previous test runs
+    // Build processEnv: do NOT copy NODE_ENV/SWAGGER_ENABLED from parent (test runner)
+    // so they are never contaminated; we set them explicitly after merge.
     const cleanProcessEnv = { ...process.env };
-    // Remove SWAGGER_ENABLED and NODE_ENV so our explicit values are used
-    delete cleanProcessEnv.SWAGGER_ENABLED;
     delete cleanProcessEnv.NODE_ENV;
+    delete cleanProcessEnv.SWAGGER_ENABLED;
 
-    // When Swagger is enabled, API must run in development mode (Swagger is dev-only).
-    // Guarantee NODE_ENV=development for the "GET /docs returns 200 in development mode" test.
+    // When swaggerEnabled: true → always run API with NODE_ENV=development (Swagger is dev-only).
     const effectiveNodeEnv = swaggerEnabled ? 'development' : (nodeEnv || 'test');
 
     const processEnv = {
       ...cleanProcessEnv,
-      // Merge any extra env vars first
       ...extraEnv,
-      // Core settings (override extraEnv if needed)
       API_PORT: String(API_PORT),
-      NODE_ENV: effectiveNodeEnv,
       SKIP_DB: skipDb ? '1' : '0',
-      // Swagger (default: disabled, but can be overridden by extraEnv)
-      // Explicitly set based on parameter to ensure test control
-      // IMPORTANT: Set AFTER extraEnv to ensure our value takes precedence
-      SWAGGER_ENABLED: swaggerEnabled ? '1' : '0',
-      // JWT defaults (required for API to start)
       JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET || 'test-jwt-secret-for-foundation-tests',
       JWT_ACCESS_TTL_SECONDS: process.env.JWT_ACCESS_TTL_SECONDS || '900',
-      // Telegram defaults
       TELEGRAM_BOT_TOKEN:
         process.env.TELEGRAM_BOT_TOKEN || '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11',
     };
-    // Force these so they are never overridden by cleanProcessEnv/extraEnv
+    // Set after merge so they are never overridden by cleanProcessEnv/extraEnv
     processEnv.NODE_ENV = effectiveNodeEnv;
     processEnv.SWAGGER_ENABLED = swaggerEnabled ? '1' : '0';
 
@@ -160,8 +148,6 @@ export async function startApi({
       const text = data.toString();
       stderr += text;
       writeFileSync(apiLogFile, text, { flag: 'a' });
-      // Output stderr to console for debugging (remove after fix)
-      console.error(`[API stderr] ${text.trim()}`);
     });
 
     apiProcess.on('error', (err) => {

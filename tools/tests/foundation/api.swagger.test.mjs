@@ -145,7 +145,7 @@ test('SWAGGER_ENABLED parsing: "1" and "true" are truthy', async () => {
   });
   
   try {
-    const response = await fetch(`${API_URL}/docs`);
+    const response = await fetch(`${API_URL}/docs`, { redirect: 'manual' });
     if (response.status !== 200) {
       throw new Error(`Expected 200 when SWAGGER_ENABLED=1, got ${response.status}`);
     }
@@ -164,7 +164,7 @@ test('SWAGGER_ENABLED parsing: "1" and "true" are truthy', async () => {
   });
   
   try {
-    const response = await fetch(`${API_URL}/docs`);
+    const response = await fetch(`${API_URL}/docs`, { redirect: 'manual' });
     if (response.status !== 200) {
       throw new Error(`Expected 200 when SWAGGER_ENABLED=true, got ${response.status}`);
     }
