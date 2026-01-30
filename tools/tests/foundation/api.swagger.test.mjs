@@ -15,11 +15,8 @@ test('GET /docs returns 200 in development mode', async () => {
   await startApi({ nodeEnv: 'development', skipDb: true, swaggerEnabled: true });
   
   try {
-    // Try /docs first, if 404 try /docs/ (some Swagger setups use trailing slash)
-    let response = await fetch(`${API_URL}/docs`);
-    if (response.status === 404) {
-      response = await fetch(`${API_URL}/docs/`);
-    }
+    // Request /docs without following redirects (Swagger UI may redirect /docs -> /docs/; we want 200 for /docs)
+    const response = await fetch(`${API_URL}/docs`, { redirect: 'manual' });
     
     if (response.status !== 200) {
       const body = await response.text();

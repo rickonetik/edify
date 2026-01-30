@@ -30,6 +30,19 @@ All notable changes to this project will be documented in this file.
 - **WebApp (mobile)** — Bottom tab bar no longer overlapped by main content: increased main `paddingBottom` to 80px + safe-area
 - **WebApp (mobile)** — Tab bar: `minHeight` instead of fixed height, `flex: 1` + centered icon/label per tab, proper centering in Telegram
 
+## [0.3.4.4] - 2026-01-30 - Story 3.4 test:foundation 100% green (Swagger /docs)
+
+### Fixed
+
+- **Foundation tests** — `GET /docs returns 200 in development mode` and `SWAGGER_ENABLED parsing: "1" and "true"` now pass
+  - Test helper: when `swaggerEnabled: true`, force `NODE_ENV=development`; strip `NODE_ENV`/`SWAGGER_ENABLED` from parent env so test env is used
+  - API `load-env`: preserve `NODE_ENV` and `SWAGGER_ENABLED` when already set (e.g. by tests or process manager) so `.env` does not override
+- Swagger test: request `/docs` with `redirect: 'manual'` so response is for `/docs` itself
+
+### Added
+
+- **Runbooks** — `STORY-3.4-FINAL-TEST-REPORT.md` (final test report and artifacts for Story 3.4)
+
 ## [0.3.4.3] - 2026-01-30 - Real profile from Telegram, instant load, profile cache (EPIC 3.3.6)
 
 ### Added

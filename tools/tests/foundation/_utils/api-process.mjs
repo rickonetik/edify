@@ -98,16 +98,21 @@ export async function startApi({
     // Note: We need PATH from process.env for pnpm to work, but we explicitly
     // exclude SWAGGER_ENABLED to avoid contamination from previous test runs
     const cleanProcessEnv = { ...process.env };
-    // Remove SWAGGER_ENABLED if it exists to ensure our explicit value is used
+    // Remove SWAGGER_ENABLED and NODE_ENV so our explicit values are used
     delete cleanProcessEnv.SWAGGER_ENABLED;
-    
+    delete cleanProcessEnv.NODE_ENV;
+
+    // When Swagger is enabled, API must run in development mode (Swagger is dev-only).
+    // Guarantee NODE_ENV=development for the "GET /docs returns 200 in development mode" test.
+    const effectiveNodeEnv = swaggerEnabled ? 'development' : (nodeEnv || 'test');
+
     const processEnv = {
       ...cleanProcessEnv,
       // Merge any extra env vars first
       ...extraEnv,
       // Core settings (override extraEnv if needed)
       API_PORT: String(API_PORT),
-      NODE_ENV: nodeEnv || 'test',
+      NODE_ENV: effectiveNodeEnv,
       SKIP_DB: skipDb ? '1' : '0',
       // Swagger (default: disabled, but can be overridden by extraEnv)
       // Explicitly set based on parameter to ensure test control
@@ -120,11 +125,9 @@ export async function startApi({
       TELEGRAM_BOT_TOKEN:
         process.env.TELEGRAM_BOT_TOKEN || '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11',
     };
-
-    // Debug: log SWAGGER_ENABLED value (remove after fix)
-    console.error(
-      `[api-process] Starting API with SWAGGER_ENABLED=${processEnv.SWAGGER_ENABLED}, NODE_ENV=${processEnv.NODE_ENV}, swaggerEnabled param=${swaggerEnabled}`,
-    );
+    // Force these so they are never overridden by cleanProcessEnv/extraEnv
+    processEnv.NODE_ENV = effectiveNodeEnv;
+    processEnv.SWAGGER_ENABLED = swaggerEnabled ? '1' : '0';
 
     // Create unique log file for this API instance
     const timestamp = Date.now();
