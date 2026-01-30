@@ -1,3 +1,4 @@
+import React from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Button,
@@ -8,14 +9,8 @@ import {
   ListItem,
   useToast,
 } from '../shared/ui/index.js';
-
-// Mock data
-const mockProfile = {
-  name: 'Никита',
-  handle: '@rickonetik',
-  status: 'Pro',
-  avatar: null, // Will use placeholder
-};
+import { useMe } from '../shared/queries/useMe.js';
+import type { ContractsV1 } from '@tracked/shared';
 
 const mockReferralCode = 'KOL-9F2A';
 
@@ -58,13 +53,13 @@ async function copyToClipboard(text: string): Promise<boolean> {
   }
 }
 
-// Avatar Placeholder Component
-function AvatarPlaceholder() {
+// Placeholder shown when no avatar or while image is loading
+function AvatarPlaceholderCircle({ size }: { size: number }) {
   return (
     <div
       style={{
-        width: '64px',
-        height: '64px',
+        width: size,
+        height: size,
         borderRadius: '50%',
         backgroundColor: 'var(--accent)',
         opacity: 0.2,
@@ -72,36 +67,81 @@ function AvatarPlaceholder() {
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
-        position: 'relative',
       }}
     >
       <div
         style={{
-          width: '40px',
-          height: '40px',
+          width: Math.round(size * 0.6),
+          height: Math.round(size * 0.6),
           borderRadius: '50%',
           backgroundColor: 'var(--accent)',
           opacity: 0.5,
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          right: 0,
-          width: '16px',
-          height: '16px',
-          borderRadius: '50%',
-          backgroundColor: 'var(--accent)',
-          border: '2px solid var(--card)',
         }}
       />
     </div>
   );
 }
 
+// URLs we've already loaded — при возврате в профиль аватар не мигает плейсхолдером
+const loadedAvatarUrls = new Set<string>();
+
+// Avatar: image from URL (with placeholder until loaded) or placeholder only
+function UserAvatar({ user }: { user: ContractsV1.UserV1 | null }) {
+  const src = user?.avatarUrl ?? null;
+  const size = 64;
+  const alreadyLoaded = src ? loadedAvatarUrls.has(src) : false;
+  const [loaded, setLoaded] = React.useState(alreadyLoaded);
+
+  const handleLoad = React.useCallback(() => {
+    setLoaded(true);
+    if (src) loadedAvatarUrls.add(src);
+  }, [src]);
+
+  if (!src) {
+    return <AvatarPlaceholderCircle size={size} />;
+  }
+
+  return (
+    <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
+      {!loaded && (
+        <div style={{ position: 'absolute', inset: 0 }}>
+          <AvatarPlaceholderCircle size={size} />
+        </div>
+      )}
+      <img
+        src={src}
+        alt=""
+        width={size}
+        height={size}
+        loading="eager"
+        onLoad={handleLoad}
+        style={{
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          objectFit: 'cover',
+          position: 'relative',
+          opacity: loaded ? 1 : 0,
+          transition: 'opacity 0.2s ease',
+        }}
+      />
+    </div>
+  );
+}
+
+function displayName(user: ContractsV1.UserV1 | null): string {
+  if (!user) return 'Пользователь';
+  const first = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
+  if (first) return first;
+  if (user.username) return user.username;
+  return 'Пользователь';
+}
+
 // Profile Card Component
-function ProfileCard() {
+function ProfileCard({ user }: { user: ContractsV1.UserV1 | null }) {
+  const name = displayName(user);
+  const handle = user?.username ? `@${user.username}` : '';
+
   return (
     <Card style={{ padding: 'var(--sp-4)', marginBottom: 'var(--sp-4)' }}>
       <div
@@ -111,7 +151,7 @@ function ProfileCard() {
           gap: 'var(--sp-4)',
         }}
       >
-        <AvatarPlaceholder />
+        <UserAvatar user={user} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
@@ -121,17 +161,19 @@ function ProfileCard() {
               marginBottom: 'var(--sp-1)',
             }}
           >
-            {mockProfile.name}
+            {name}
           </div>
-          <div
-            style={{
-              fontSize: 'var(--text-sm)',
-              color: 'var(--muted-fg)',
-              marginBottom: 'var(--sp-2)',
-            }}
-          >
-            {mockProfile.handle}
-          </div>
+          {handle && (
+            <div
+              style={{
+                fontSize: 'var(--text-sm)',
+                color: 'var(--muted-fg)',
+                marginBottom: 'var(--sp-2)',
+              }}
+            >
+              {handle}
+            </div>
+          )}
           <div
             style={{
               display: 'inline-block',
@@ -143,7 +185,7 @@ function ProfileCard() {
               fontWeight: 'var(--font-weight-medium)',
             }}
           >
-            {mockProfile.status}
+            Pro
           </div>
         </div>
       </div>
@@ -388,6 +430,8 @@ export function AccountPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const state = searchParams.get('state') || 'default';
+  const { data: meData } = useMe();
+  const user = meData?.user ?? null;
 
   // Loading state
   if (state === 'loading') {
@@ -429,7 +473,7 @@ export function AccountPage() {
   // Default state
   return (
     <div style={{ padding: 'var(--sp-4)' }}>
-      <ProfileCard />
+      <ProfileCard user={user} />
 
       {/* Referral Card */}
       <ReferralCard />

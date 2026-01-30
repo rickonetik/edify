@@ -1,9 +1,18 @@
 import crypto from 'node:crypto';
-import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  ArgumentsHost,
+  Catch,
+  ExceptionFilter,
+  HttpException,
+  HttpStatus,
+  Logger,
+} from '@nestjs/common';
 import { ErrorCodes, type ApiErrorResponse } from '@tracked/shared';
 
 @Catch()
 export class ApiExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(ApiExceptionFilter.name);
+
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse();
@@ -73,11 +82,14 @@ export class ApiExceptionFilter implements ExceptionFilter {
           code = ErrorCodes.INTERNAL_ERROR;
       }
     } else {
-      // Не HttpException - внутренняя ошибка
+      // Не HttpException - внутренняя ошибка (логируем для отладки)
       statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
       message = 'Internal Server Error';
       code = ErrorCodes.INTERNAL_ERROR;
       details = undefined;
+      const errMsg = exception instanceof Error ? exception.message : String(exception);
+      const errStack = exception instanceof Error ? exception.stack : '';
+      this.logger.error(`${errMsg}${errStack ? `\n${errStack}` : ''}`);
     }
 
     const errorResponse: ApiErrorResponse = {

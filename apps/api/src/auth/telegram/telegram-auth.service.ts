@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, Logger } from '@nestjs/common';
 import { ContractsV1 } from '@tracked/shared';
 import { validateTelegramInitData, TelegramInitDataValidationError } from './telegram-init-data.js';
 import { UsersRepository } from '../../users/users.repository.js';
@@ -9,6 +9,8 @@ const env = validateOrThrow(ApiEnvSchema, process.env);
 
 @Injectable()
 export class TelegramAuthService {
+  private readonly logger = new Logger(TelegramAuthService.name);
+
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly jwtService: JwtService,
@@ -29,6 +31,9 @@ export class TelegramAuthService {
         initData,
         env.TELEGRAM_BOT_TOKEN,
         env.TELEGRAM_INITDATA_MAX_AGE_SECONDS,
+      );
+      this.logger.log(
+        `initData validated: telegramUserId=${validated.telegramUserId}, firstName=${validated.firstName ?? '—'}, username=${validated.username ?? '—'}`,
       );
 
       // Upsert user
@@ -53,6 +58,9 @@ export class TelegramAuthService {
       return { user, accessToken };
     } catch (error) {
       if (error instanceof TelegramInitDataValidationError) {
+        this.logger.warn(
+          `initData validation failed: code=${error.code}, message=${error.message}`,
+        );
         if (error.code === 'MALFORMED') {
           throw new BadRequestException({
             message: error.message,
@@ -65,6 +73,9 @@ export class TelegramAuthService {
           error: 'Unauthorized',
         });
       }
+      this.logger.error(
+        `verifyAndUpsert unexpected error: ${error instanceof Error ? error.message : String(error)}`,
+      );
       // Re-throw unexpected errors
       throw error;
     }

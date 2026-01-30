@@ -1,6 +1,6 @@
 import { ContractsV1 } from '@tracked/shared';
 import { fetchJson, ApiClientError } from '../api/index.js';
-import { getTelegramInitData } from './telegram.js';
+import { getTelegramInitData, waitForTelegramWebApp } from './telegram.js';
 import { setAccessToken, clearAccessToken } from './tokenStorage.js';
 import { config } from '../config/flags.js';
 
@@ -29,6 +29,9 @@ export type BootstrapAuthResult =
  * Independent of REAL_API/USE_MSW flags (they only control where requests go).
  */
 export async function bootstrapAuth(): Promise<BootstrapAuthResult> {
+  // Wait for Telegram to inject WebApp (may be async in some clients, especially on mobile)
+  await waitForTelegramWebApp(5000);
+
   // Get initData from Telegram
   const initData = getTelegramInitData();
 
@@ -37,9 +40,11 @@ export async function bootstrapAuth(): Promise<BootstrapAuthResult> {
     return { mode: 'no-initdata' };
   }
 
-  // Check if API is available
-  if (!config.API_BASE_URL) {
-    // API not configured, but we have initData - this is an error state
+  // Check if API is available (explicit URL or same-origin in browser via proxy)
+  const hasApi =
+    config.API_BASE_URL ||
+    (typeof window !== 'undefined' && typeof window.location?.origin === 'string');
+  if (!hasApi) {
     return { mode: 'error', error: new Error('API_BASE_URL is not configured') };
   }
 

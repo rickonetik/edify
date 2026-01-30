@@ -82,7 +82,9 @@ export async function fetchJson<T = unknown>(options: FetchJsonOptions): Promise
   }
 
   // Real API fetch (or fallback from inline mock)
-  const baseUrl = config.API_BASE_URL || '';
+  // When API_BASE_URL is empty in browser, use same origin (Vite proxy forwards /auth, /me, /health)
+  const baseUrl =
+    config.API_BASE_URL || (typeof window !== 'undefined' ? (window.location?.origin ?? '') : '');
   if (!baseUrl) {
     throw new ApiClientError(0, 'CONFIG_ERROR', 'VITE_API_BASE_URL is not configured', requestId);
   }
@@ -166,9 +168,10 @@ export async function fetchJson<T = unknown>(options: FetchJsonOptions): Promise
 
   // Try to parse error response as unified format
   const contentType = response.headers.get('content-type');
+  let errorBody: unknown = undefined;
   if (contentType?.includes('application/json')) {
     try {
-      const errorBody = await response.json();
+      errorBody = await response.json();
       const parsed = ContractsV1.ApiErrorResponseV1Schema.safeParse(errorBody);
 
       if (parsed.success && parsed.data.error) {
@@ -179,6 +182,22 @@ export async function fetchJson<T = unknown>(options: FetchJsonOptions): Promise
           error.message,
           error.requestId || responseRequestId,
           error.details,
+        );
+      }
+
+      // API may return flat format { statusCode, code, message, requestId } (Nest ApiExceptionFilter)
+      if (
+        errorBody &&
+        typeof errorBody === 'object' &&
+        'message' in errorBody &&
+        typeof (errorBody as { message?: unknown }).message === 'string'
+      ) {
+        const flat = errorBody as { code?: string; message: string; requestId?: string };
+        throw new ApiClientError(
+          response.status,
+          flat.code ?? mapHttpStatusToErrorCode(response.status),
+          flat.message,
+          flat.requestId ?? responseRequestId,
         );
       }
     } catch (error) {
@@ -193,14 +212,13 @@ export async function fetchJson<T = unknown>(options: FetchJsonOptions): Promise
   // Fallback: create error from status code
   const code = mapHttpStatusToErrorCode(response.status);
   let message = 'Request failed';
-
-  try {
-    const text = await response.text();
-    if (text) {
-      message = text.length > 200 ? `${text.substring(0, 200)}...` : text;
-    }
-  } catch {
-    // Ignore text parsing errors
+  if (
+    errorBody &&
+    typeof errorBody === 'object' &&
+    'message' in errorBody &&
+    typeof (errorBody as { message?: unknown }).message === 'string'
+  ) {
+    message = (errorBody as { message: string }).message;
   }
 
   throw new ApiClientError(response.status, code, message, responseRequestId);

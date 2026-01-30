@@ -30,6 +30,31 @@ All notable changes to this project will be documented in this file.
 - **WebApp (mobile)** — Bottom tab bar no longer overlapped by main content: increased main `paddingBottom` to 80px + safe-area
 - **WebApp (mobile)** — Tab bar: `minHeight` instead of fixed height, `flex: 1` + centered icon/label per tab, proper centering in Telegram
 
+## [0.3.4.3] - 2026-01-30 - Real profile from Telegram, instant load, profile cache (EPIC 3.3.6)
+
+### Added
+
+- **WebApp — Real user data** — Learn and Account pages use `useMe()` (GET /me); name, username, avatar from Telegram replace mock data
+- **Telegram Web App SDK** — `index.html` loads `telegram-web-app.js` so `window.Telegram.WebApp` and `initData` are available in Mini App
+- **Bootstrap loading screen** — First paint shows app-style gradient + spinner instead of black screen while auth/bootstrap runs
+- **QueryClientProvider** — React Query wrapped in App so `useMe()` works on Learn/Account
+- **Profile/avatar cache** — `useMe`: 10 min staleTime, no refetch on mount, keepPreviousData; avatar URLs cached so no placeholder flash when returning to Profile
+- **API** — Exception filter logs full error + stack on 500; `load-env` and dotenv so API reads root `.env`; JWT fix: `import jwt from 'jsonwebtoken'` for ESM
+- **Auth diagnostic** — Optional AuthDiagnosticContext (dev); flat API error format parsed so real message shown (e.g. Invalid signature)
+
+### Changed
+
+- **WebApp** — TopBar shows "Edify" again; diagnostic banner removed from AppShell
+- **WebApp** — fetchJson accepts API flat error shape `{ statusCode, code, message, requestId }` and shows real message
+- **WebApp** — Bootstrap runs after first paint; app renders loading screen then replaces with App when bootstrap completes
+- **API** — DatabaseModule reads `DATABASE_URL` at factory call time after env load
+
+### Fixed
+
+- JWT: `jwt.sign is not a function` — use default import for jsonwebtoken in ESM
+- Profile: no loading flash when navigating Learn → Profile — useMe cache + avatar URL cache
+- Black screen on Mini App open — loading screen with app background shown immediately
+
 ## [0.3.4.2] - 2026-01-29 - Tab bar safe-area, single source of truth (--tabs-h, --topbar-h)
 
 ### Changed

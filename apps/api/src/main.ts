@@ -1,3 +1,4 @@
+import './load-env.js';
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
@@ -24,6 +25,14 @@ async function bootstrap() {
 
   app.useGlobalInterceptors(new RequestIdInterceptor());
   app.useGlobalFilters(new ApiExceptionFilter());
+
+  // CORS: allow Web App opened from Telegram (ngrok or any origin) to call API
+  app.enableCors({
+    origin: true, // reflect request origin (ngrok, localhost, etc.)
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-request-id'],
+    credentials: true,
+  });
 
   // Swagger enabled only if:
   // 1. NODE_ENV !== 'production' (hard gate - never in production)

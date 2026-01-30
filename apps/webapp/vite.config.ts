@@ -10,6 +10,15 @@ export default defineConfig(({ mode }) => ({
     port: 5173,
     host: true,
     ...(mode === 'development' ? { allowedHosts: DEV_ALLOWED_HOSTS } : {}),
+    // Proxy API to avoid mixed content (HTTPS page → HTTP API) when opening via ngrok
+    proxy:
+      mode === 'development'
+        ? {
+            '/auth': { target: 'http://localhost:3001', changeOrigin: true },
+            '/me': { target: 'http://localhost:3001', changeOrigin: true },
+            '/health': { target: 'http://localhost:3001', changeOrigin: true },
+          }
+        : undefined,
   },
   resolve: {
     alias: {

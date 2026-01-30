@@ -144,6 +144,44 @@ kill -9 <PID>
 - Update `TELEGRAM_WEBAPP_URL` in `.env` after each ngrok restart
 - On Story 1.1, bot will read from env automatically
 
+### «Ничего не работает» после /start → Open WebApp
+
+Проверь по порядку:
+
+1. **Webapp запущен** на том порту, на который смотрит ngrok (часто 5173 или 5174):
+
+   ```bash
+   VITE_API_BASE_URL=http://localhost:3001 VITE_REAL_API=1 pnpm --filter @tracked/webapp dev
+   ```
+
+   Без `VITE_API_BASE_URL` приложение откроется, но авторизация не сработает (появится экран «Не удалось подключиться»).
+
+2. **API запущен** (из корня репо, с `.env`):
+
+   ```bash
+   cd /path/to/repo && node apps/api/dist/apps/api/src/main.js
+   ```
+
+   Или через симлинк `apps/api/.env` → корневой `.env`: `cd apps/api && node dist/apps/api/src/main.js`.
+
+3. **ngrok** туннелирует порт webapp (например 5174):
+
+   ```bash
+   ngrok http 5174
+   ```
+
+   В корневом `.env` (или `apps/bot/.env`) задай `TELEGRAM_WEBAPP_URL=https://<твой-ngrok-url>` (без слэша в конце).
+
+4. **Бот запущен** и читает тот же `.env`:
+
+   ```bash
+   pnpm --filter @tracked/bot dev
+   ```
+
+5. **Открываешь с компьютера (Telegram Desktop):** `VITE_API_BASE_URL=http://localhost:3001` достаточно — браузер мини-приложения идёт на твой localhost.
+
+6. **Открываешь с телефона:** с телефона `localhost:3001` недоступен. Нужен второй туннель для API (например `ngrok http 3001` в другом терминале) и запуск webapp с `VITE_API_BASE_URL=https://<api-ngrok-url>`.
+
 ## Development Workflow
 
 1. Start webapp: `pnpm --filter @tracked/webapp dev`

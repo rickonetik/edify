@@ -1,4 +1,4 @@
-import { Controller, Post, Body, BadRequestException, HttpCode } from '@nestjs/common';
+import { Controller, Post, Body, BadRequestException, HttpCode, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { ContractsV1 } from '@tracked/shared';
 import { TelegramAuthService } from './telegram-auth.service.js';
@@ -6,6 +6,8 @@ import { TelegramAuthService } from './telegram-auth.service.js';
 @ApiTags('Auth')
 @Controller()
 export class TelegramAuthController {
+  private readonly logger = new Logger(TelegramAuthController.name);
+
   constructor(private readonly telegramAuthService: TelegramAuthService) {}
 
   @Post('auth/telegram')
@@ -53,15 +55,25 @@ export class TelegramAuthController {
   async telegramAuth(
     @Body() dto: ContractsV1.AuthTelegramRequestV1,
   ): Promise<ContractsV1.AuthTelegramResponseV1> {
+    const initDataLength = typeof dto?.initData === 'string' ? dto.initData.length : 0;
+    this.logger.log(`POST /auth/telegram received, initData length=${initDataLength}`);
+
     // Validate request body
     const validation = ContractsV1.AuthTelegramRequestV1Schema.safeParse(dto);
     if (!validation.success) {
+      this.logger.warn(
+        `POST /auth/telegram validation failed: ${JSON.stringify(validation.error.errors)}`,
+      );
       throw new BadRequestException({
         message: 'Validation failed',
         errors: validation.error.errors,
       });
     }
 
-    return await this.telegramAuthService.verifyAndUpsert(validation.data.initData);
+    const result = await this.telegramAuthService.verifyAndUpsert(validation.data.initData);
+    this.logger.log(
+      `POST /auth/telegram success, userId=${result.user.id}, telegramUserId=${result.user.telegramUserId}`,
+    );
+    return result;
   }
 }

@@ -1,5 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import * as jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { ApiEnvSchema, validateOrThrow } from '@tracked/shared';
 
 const env = validateOrThrow(ApiEnvSchema, process.env);

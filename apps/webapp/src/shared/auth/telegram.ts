@@ -80,3 +80,27 @@ export function getTelegramInitData(): string | null {
     return null;
   }
 }
+
+/**
+ * Wait for window.Telegram.WebApp to be available (Telegram client may inject it async).
+ * @param maxMs - Max time to wait in ms
+ * @returns true if Telegram.WebApp is present, false on timeout
+ */
+export function waitForTelegramWebApp(maxMs: number = 2500): Promise<boolean> {
+  if (typeof window === 'undefined') return Promise.resolve(false);
+  const start = Date.now();
+  return new Promise((resolve) => {
+    const check = () => {
+      if (window.Telegram?.WebApp) {
+        resolve(true);
+        return;
+      }
+      if (Date.now() - start >= maxMs) {
+        resolve(false);
+        return;
+      }
+      setTimeout(check, 100);
+    };
+    check();
+  });
+}

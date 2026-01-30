@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Button, Card, Skeleton, EmptyState, ErrorState } from '../shared/ui/index.js';
+import { useMe } from '../shared/queries/useMe.js';
 
 // Mock data
 const mockCurrentCourse = {
@@ -592,10 +593,23 @@ function LoadingState() {
   );
 }
 
+function displayName(
+  user: { firstName?: string; lastName?: string; username?: string } | null,
+): string {
+  if (!user) return 'Пользователь';
+  const first = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
+  if (first) return first;
+  if (user.username) return user.username;
+  return 'Пользователь';
+}
+
 // Main LearnPage Component
 export function LearnPage() {
   const [searchParams] = useSearchParams();
   const state = searchParams.get('state') || 'default';
+  const { data: meData } = useMe();
+  const user = meData?.user ?? null;
+  const userName = displayName(user);
 
   if (state === 'loading') {
     return <LoadingState />;
@@ -643,7 +657,7 @@ export function LearnPage() {
           margin: '0 0 var(--sp-5) 0',
         }}
       >
-        Привет, Никита
+        Привет, {userName}
       </h1>
 
       {/* Current Course Card */}

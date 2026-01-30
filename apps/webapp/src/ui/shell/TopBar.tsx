@@ -23,17 +23,15 @@ export function TopBar() {
         paddingRight: 'var(--sp-4)',
       }}
     >
-      <h1
+      <span
         style={{
-          margin: 0,
           fontSize: 'var(--text-lg)',
           fontWeight: 'var(--font-weight-semibold)',
           color: 'var(--fg)',
-          lineHeight: '1.2',
         }}
       >
         Edify
-      </h1>
+      </span>
     </header>
   );
 }

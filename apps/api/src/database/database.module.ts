@@ -29,17 +29,14 @@ const isDbDisabled = skipDb || !hasDatabaseUrl;
     {
       provide: Pool,
       useFactory: () => {
-        if (isDbDisabled) {
-          // Return null when DB is disabled
+        // Read at factory call time (Nest may call this after env is loaded)
+        const skip = process.env.SKIP_DB === '1';
+        const url = process.env.DATABASE_URL;
+        if (skip || !url) {
           return null;
         }
-        // Use env.DATABASE_URL if available, otherwise fallback to process.env.DATABASE_URL
-        const databaseUrl = env.DATABASE_URL || process.env.DATABASE_URL;
-        if (!databaseUrl) {
-          throw new Error('DATABASE_URL is required when SKIP_DB is not set');
-        }
         return new Pool({
-          connectionString: databaseUrl,
+          connectionString: url,
           connectionTimeoutMillis: 3000, // Fail-fast: 3 seconds
         });
       },
@@ -54,9 +51,13 @@ export class DatabaseModule implements OnModuleInit, OnModuleDestroy {
     // Check if pool is null (disabled)
     // If pool is null, it means isDbDisabled was true at module load time
     if (!this.pool) {
-      // Determine the actual reason: check skipDb first, then check if DATABASE_URL was missing
-      const reason = skipDb ? 'SKIP_DB=1' : 'DATABASE_URL not set';
-      console.warn(`⚠️  Database is disabled (${reason}). DB-dependent endpoints will fail.`);
+      // Only warn when DB is actually disabled (optional injection can give null even when Pool provider returns value if resolution order differs)
+      const urlNow = process.env.DATABASE_URL;
+      if (!urlNow && process.env.SKIP_DB !== '1') {
+        console.warn(
+          `⚠️  Database is disabled (DATABASE_URL not set). DB-dependent endpoints will fail.`,
+        );
+      }
       return;
     }
 
@@ -98,7 +99,7 @@ export class DatabaseModule implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    if (this.pool && !isDbDisabled) {
+    if (this.pool) {
       await this.pool.end();
     }
   }
