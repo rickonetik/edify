@@ -1,12 +1,35 @@
 import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert';
-import { UnauthorizedException, ExecutionContext } from '@nestjs/common';
+import { UnauthorizedException, ForbiddenException, ExecutionContext } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 import { JwtAuthGuard } from '../jwt-auth.guard.js';
 import { JwtService } from '../jwt.service.js';
+import type { UsersRepository } from '../../../users/users.repository.js';
+import type { AuditService } from '../../../audit/audit.service.js';
 
 // Mock env before importing
 const originalEnv = process.env;
+
+function mockUsersRepository(overrides?: { bannedAt?: string | null }): UsersRepository {
+  const user = {
+    id: '123e4567-e89b-12d3-a456-426614174000',
+    telegramUserId: '123456789',
+    username: 'test',
+    firstName: 'Test',
+    lastName: 'User',
+    avatarUrl: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    bannedAt: overrides?.bannedAt ?? null,
+  };
+  return {
+    findById: async () => user,
+  } as unknown as UsersRepository;
+}
+
+function mockAuditService(): AuditService {
+  return { write: async () => {} } as unknown as AuditService;
+}
 
 describe('JwtAuthGuard', () => {
   let guard: JwtAuthGuard;
@@ -22,7 +45,7 @@ describe('JwtAuthGuard', () => {
       NODE_ENV: 'test',
     };
     jwtService = new JwtService();
-    guard = new JwtAuthGuard(jwtService);
+    guard = new JwtAuthGuard(jwtService, mockUsersRepository(), mockAuditService());
   });
 
   function createMockContext(headers: Record<string, string>): ExecutionContext {
@@ -43,7 +66,7 @@ describe('JwtAuthGuard', () => {
   }
 
   describe('canActivate', () => {
-    it('should allow request with valid Bearer token', () => {
+    it('should allow request with valid Bearer token', async () => {
       const token = jwtService.signAccessToken({
         userId: '123e4567-e89b-12d3-a456-426614174000',
         telegramUserId: '123456789',
@@ -53,7 +76,7 @@ describe('JwtAuthGuard', () => {
         authorization: `Bearer ${token}`,
       });
 
-      const result = guard.canActivate(context);
+      const result = await guard.canActivate(context);
 
       assert.strictEqual(result, true);
       const request = context.switchToHttp().getRequest();
@@ -61,64 +84,76 @@ describe('JwtAuthGuard', () => {
       assert.strictEqual(request.user.telegramUserId, '123456789');
     });
 
-    it('should throw UnauthorizedException for missing Authorization header', () => {
-      const context = createMockContext({});
+    it('should throw ForbiddenException when user is banned', async () => {
+      const bannedGuard = new JwtAuthGuard(
+        jwtService,
+        mockUsersRepository({ bannedAt: new Date().toISOString() }),
+        mockAuditService(),
+      );
+      const token = jwtService.signAccessToken({
+        userId: '123e4567-e89b-12d3-a456-426614174000',
+        telegramUserId: '123456789',
+      });
+      const context = createMockContext({
+        authorization: `Bearer ${token}`,
+      });
 
-      assert.throws(
-        () => guard.canActivate(context),
-        (error: UnauthorizedException) => {
-          return (
-            error instanceof UnauthorizedException &&
-            error.message.includes('Missing Authorization header')
-          );
-        },
+      await assert.rejects(
+        async () => bannedGuard.canActivate(context),
+        (error: ForbiddenException) =>
+          error instanceof ForbiddenException &&
+          (error.getResponse() as { code?: string })?.code === 'USER_BANNED',
       );
     });
 
-    it('should throw UnauthorizedException for invalid Authorization header format', () => {
+    it('should throw UnauthorizedException for missing Authorization header', async () => {
+      const context = createMockContext({});
+
+      await assert.rejects(
+        async () => guard.canActivate(context),
+        (error: UnauthorizedException) =>
+          error instanceof UnauthorizedException &&
+          error.message.includes('Missing Authorization header'),
+      );
+    });
+
+    it('should throw UnauthorizedException for invalid Authorization header format', async () => {
       const context = createMockContext({
         authorization: 'InvalidFormat token',
       });
 
-      assert.throws(
-        () => guard.canActivate(context),
-        (error: UnauthorizedException) => {
-          return (
-            error instanceof UnauthorizedException &&
-            error.message.includes('Invalid Authorization header format')
-          );
-        },
+      await assert.rejects(
+        async () => guard.canActivate(context),
+        (error: UnauthorizedException) =>
+          error instanceof UnauthorizedException &&
+          error.message.includes('Invalid Authorization header format'),
       );
     });
 
-    it('should throw UnauthorizedException for missing token in Bearer format', () => {
+    it('should throw UnauthorizedException for missing token in Bearer format', async () => {
       const context = createMockContext({
         authorization: 'Bearer ',
       });
 
-      assert.throws(
-        () => guard.canActivate(context),
-        (error: UnauthorizedException) => {
-          return error instanceof UnauthorizedException && error.message.includes('Missing token');
-        },
+      await assert.rejects(
+        async () => guard.canActivate(context),
+        (error: UnauthorizedException) =>
+          error instanceof UnauthorizedException && error.message.includes('Missing token'),
       );
     });
 
-    it('should throw UnauthorizedException for invalid token', () => {
+    it('should throw UnauthorizedException for invalid token', async () => {
       const context = createMockContext({
         authorization: 'Bearer invalid.token.here',
       });
 
-      assert.throws(
-        () => guard.canActivate(context),
-        (error: UnauthorizedException) => {
-          return error instanceof UnauthorizedException;
-        },
+      await assert.rejects(
+        async () => guard.canActivate(context),
+        (error: UnauthorizedException) => error instanceof UnauthorizedException,
       );
     });
 
-    it('should throw UnauthorizedException for expired token', () => {
-      // Create an expired token
+    it('should throw UnauthorizedException for expired token', async () => {
       const expiredToken = jwt.sign(
         {
           sub: '123e4567-e89b-12d3-a456-426614174000',
@@ -134,15 +169,32 @@ describe('JwtAuthGuard', () => {
         authorization: `Bearer ${expiredToken}`,
       });
 
-      assert.throws(
-        () => guard.canActivate(context),
-        (error: UnauthorizedException) => {
-          return error instanceof UnauthorizedException;
-        },
+      await assert.rejects(
+        async () => guard.canActivate(context),
+        (error: UnauthorizedException) => error instanceof UnauthorizedException,
       );
     });
 
-    it('should handle Authorization header as array', () => {
+    it('should throw UnauthorizedException when user not found', async () => {
+      const noUserRepo = {
+        findById: async () => null,
+      } as unknown as UsersRepository;
+      const guardNoUser = new JwtAuthGuard(jwtService, noUserRepo, mockAuditService());
+      const token = jwtService.signAccessToken({
+        userId: '123e4567-e89b-12d3-a456-426614174000',
+        telegramUserId: '123456789',
+      });
+      const context = createMockContext({
+        authorization: `Bearer ${token}`,
+      });
+
+      await assert.rejects(
+        async () => guardNoUser.canActivate(context),
+        (error: UnauthorizedException) => error instanceof UnauthorizedException,
+      );
+    });
+
+    it('should handle Authorization header as array', async () => {
       const token = jwtService.signAccessToken({
         userId: '123e4567-e89b-12d3-a456-426614174000',
         telegramUserId: '123456789',
@@ -165,13 +217,9 @@ describe('JwtAuthGuard', () => {
         }),
       } as ExecutionContext;
 
-      // This should work because we check typeof authHeader === 'string'
-      // Arrays will fail the check and throw
-      assert.throws(
-        () => guard.canActivate(context),
-        (error: UnauthorizedException) => {
-          return error instanceof UnauthorizedException;
-        },
+      await assert.rejects(
+        async () => guard.canActivate(context),
+        (error: UnauthorizedException) => error instanceof UnauthorizedException,
       );
     });
   });

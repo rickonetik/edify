@@ -30,6 +30,10 @@ export class MeController {
     status: 401,
     description: 'Unauthorized - invalid or missing token',
   })
+  @ApiResponse({
+    status: 403,
+    description: 'User is banned (USER_BANNED)',
+  })
   async getMe(
     @Request()
     request: {
@@ -55,6 +59,17 @@ export class MeController {
       });
     }
 
-    return { user };
+    // Return UserV1 only (do not expose bannedAt)
+    const userV1: ContractsV1.UserV1 = {
+      id: user.id,
+      telegramUserId: user.telegramUserId,
+      username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      avatarUrl: user.avatarUrl,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
+    return { user: userV1 };
   }
 }

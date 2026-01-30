@@ -15,7 +15,7 @@ describe('TelegramAuth Integration', () => {
     pool = new Pool({ connectionString: DATABASE_URL });
     repository = new UsersRepository(pool);
 
-    // Ensure table exists
+    // Ensure table exists (match migration 001 + 002)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -25,9 +25,15 @@ describe('TelegramAuth Integration', () => {
         last_name TEXT,
         avatar_url TEXT,
         created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-        updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+        updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        banned_at TIMESTAMP WITH TIME ZONE NULL,
+        ban_reason TEXT NULL
       );
       CREATE INDEX IF NOT EXISTS idx_users_telegram_user_id ON users(telegram_user_id);
+    `);
+    await pool.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS banned_at TIMESTAMP WITH TIME ZONE NULL;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_reason TEXT NULL;
     `);
   });
 

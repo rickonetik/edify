@@ -1,9 +1,17 @@
-import { Injectable, UnauthorizedException, BadRequestException, Logger } from '@nestjs/common';
-import { ContractsV1 } from '@tracked/shared';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+  ForbiddenException,
+  ServiceUnavailableException,
+  Logger,
+} from '@nestjs/common';
+import { ContractsV1, ErrorCodes } from '@tracked/shared';
 import { validateTelegramInitData, TelegramInitDataValidationError } from './telegram-init-data.js';
 import { UsersRepository } from '../../users/users.repository.js';
 import { ApiEnvSchema, validateOrThrow } from '@tracked/shared';
 import { JwtService } from '../session/jwt.service.js';
+import { AuditService } from '../../audit/audit.service.js';
 
 const env = validateOrThrow(ApiEnvSchema, process.env);
 
@@ -14,17 +22,34 @@ export class TelegramAuthService {
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly jwtService: JwtService,
+    private readonly auditService: AuditService,
   ) {}
 
   /**
    * Verify Telegram initData and upsert user
    *
    * @param initData - Raw initData string from Telegram WebApp
+   * @param requestContext - Optional request context for audit (traceId, path, method, etc.)
    * @returns User data and access token
    * @throws {BadRequestException} On malformed initData or missing fields
    * @throws {UnauthorizedException} On invalid signature or expired auth_date
+   * @throws {ForbiddenException} When user is banned (USER_BANNED)
    */
-  async verifyAndUpsert(initData: string): Promise<ContractsV1.AuthTelegramResponseV1> {
+  async verifyAndUpsert(
+    initData: string,
+    requestContext?: {
+      traceId?: string;
+      path?: string;
+      method?: string;
+      userAgent?: string;
+      ip?: string;
+    },
+  ): Promise<ContractsV1.AuthTelegramResponseV1> {
+    if (!env.TELEGRAM_BOT_TOKEN) {
+      throw new ServiceUnavailableException(
+        'Telegram auth not configured (TELEGRAM_BOT_TOKEN is empty)',
+      );
+    }
     try {
       // Validate initData
       const validated = validateTelegramInitData(
@@ -44,6 +69,28 @@ export class TelegramAuthService {
         lastName: validated.lastName,
         avatarUrl: validated.avatarUrl,
       });
+
+      // Ban enforcement: do not issue token
+      if (user.bannedAt != null) {
+        await this.auditService.write({
+          actorUserId: user.id,
+          action: 'auth.blocked.banned',
+          entityType: 'user',
+          entityId: user.id,
+          meta: {
+            path: requestContext?.path ?? '/auth/telegram',
+            method: requestContext?.method ?? 'POST',
+            telegramId: validated.telegramUserId,
+            ...(requestContext?.userAgent != null && { userAgent: requestContext.userAgent }),
+            ...(requestContext?.ip != null && { ip: requestContext.ip }),
+          },
+          traceId: requestContext?.traceId ?? null,
+        });
+        throw new ForbiddenException({
+          code: ErrorCodes.USER_BANNED,
+          message: 'Access denied: user is banned',
+        });
+      }
 
       // Generate access token
       // telegramUserId is always present after upsertByTelegramUserId

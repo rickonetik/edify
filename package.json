@@ -1,5 +1,6 @@
 {
   "name": "tracked-lms",
+  "version": "0.3.4.5",
   "private": true,
   "packageManager": "pnpm@9.15.4",
   "scripts": {
@@ -10,7 +11,8 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier . --write",
     "clean": "turbo run clean && rm -rf node_modules",
-    "dev": "turbo run dev --parallel",
+    "dev": "node tools/dev/ensure-env.mjs && turbo run dev --parallel",
+    "dev:app": "node tools/dev/ensure-env.mjs && turbo run dev --filter=@tracked/api --filter=@tracked/webapp",
     "dev:webapp": "pnpm --filter @tracked/webapp dev",
     "start:api": "pnpm --filter @tracked/shared build && pnpm --filter @tracked/api start",
     "dev:api": "pnpm --filter @tracked/shared build && pnpm --filter @tracked/api dev",

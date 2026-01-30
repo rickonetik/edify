@@ -1,6 +1,9 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import jwt from 'jsonwebtoken';
+import { createRequire } from 'node:module';
 import { ApiEnvSchema, validateOrThrow } from '@tracked/shared';
+
+const require = createRequire(import.meta.url);
+const jwt = require('jsonwebtoken') as typeof import('jsonwebtoken');
 
 const env = validateOrThrow(ApiEnvSchema, process.env);
 

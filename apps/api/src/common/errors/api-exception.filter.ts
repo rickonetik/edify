@@ -38,11 +38,12 @@ export class ApiExceptionFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       statusCode = exception.getStatus();
       const exceptionResponse = exception.getResponse();
+      let resp: { code?: string; message?: string; [k: string]: unknown } | null = null;
 
       if (typeof exceptionResponse === 'string') {
         message = exceptionResponse;
       } else if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
-        const resp = exceptionResponse as any;
+        resp = exceptionResponse as { code?: string; message?: string; [k: string]: unknown };
 
         // Для 400 (валидация) прокидываем details, если есть
         if (statusCode === HttpStatus.BAD_REQUEST && Array.isArray(resp.message)) {
@@ -61,22 +62,23 @@ export class ApiExceptionFilter implements ExceptionFilter {
         message = exception.message || 'Bad Request';
       }
 
-      // Маппинг статуса на код
+      // Custom code from exception (e.g. USER_BANNED for 403) or fallback by status
+      const customCode = typeof resp?.code === 'string' ? resp.code : undefined;
       switch (statusCode) {
         case HttpStatus.BAD_REQUEST:
-          code = ErrorCodes.VALIDATION_ERROR;
+          code = customCode ?? ErrorCodes.VALIDATION_ERROR;
           break;
         case HttpStatus.UNAUTHORIZED:
-          code = ErrorCodes.UNAUTHORIZED;
+          code = customCode ?? ErrorCodes.UNAUTHORIZED;
           break;
         case HttpStatus.FORBIDDEN:
-          code = ErrorCodes.FORBIDDEN;
+          code = customCode ?? ErrorCodes.FORBIDDEN;
           break;
         case HttpStatus.NOT_FOUND:
-          code = ErrorCodes.NOT_FOUND;
+          code = customCode ?? ErrorCodes.NOT_FOUND;
           break;
         case HttpStatus.CONFLICT:
-          code = ErrorCodes.CONFLICT;
+          code = customCode ?? ErrorCodes.CONFLICT;
           break;
         default:
           code = ErrorCodes.INTERNAL_ERROR;

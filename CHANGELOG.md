@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.4.5] - 2026-01-30 - Ban enforcement (Story 3.5), stable dev startup
+
+### Added
+
+- **Story 3.5 — Ban enforcement** — Banned users get 403 (USER_BANNED) on POST /auth/telegram and GET /me; minimal audit entry per denied request
+  - Shared: error code `USER_BANNED` exported from `@tracked/shared`
+  - DB: `users.banned_at`, `users.ban_reason`; table `audit_log` (actor_user_id, action, entity_type, entity_id, meta, trace_id, created_at)
+  - API: TelegramAuthService checks banned after upsert → 403 + audit `auth.blocked.banned`; JWT guard loads user → if banned 403 + audit `request.blocked.banned`
+  - ApiExceptionFilter: custom `code` from exception (e.g. USER_BANNED) for 403
+- **Dev startup** — Single-scheme launch: `pnpm dev:app` (API + Webapp) or `pnpm dev` (all)
+  - `tools/dev/ensure-env.mjs`: create `.env` from `.env.example` if missing; set `JWT_ACCESS_SECRET` (32 chars) if empty
+  - Turbo `dev` task: `dependsOn: ["^build"]` so shared builds before apps
+  - `pnpm dev:app`: ensure-env + turbo dev only for @tracked/api and @tracked/webapp
+- **API** — `TELEGRAM_BOT_TOKEN` optional (default ''); POST /auth/telegram returns 503 "Telegram auth not configured" if empty so API starts without it
+
+### Changed
+
+- **README** — Quick Start: "Запуск проекта (одна схема)" with `pnpm dev:app`; no manual `.env` copy
+- **API** — JWT: load `jsonwebtoken` via `createRequire(import.meta.url)` so `jwt.sign`/`jwt.verify` work in ESM (fixes "jwt.sign is not a function")
+
+### Fixed
+
+- JWT in ESM: `jwt.sign is not a function` — use `require('jsonwebtoken')` via createRequire so Mini App auth and /me return real user data
+
 ## [0.3.4] - 2026-01-29 - Bot WebApp button, ngrok dev fixes (Story 3.4)
 
 ### Added

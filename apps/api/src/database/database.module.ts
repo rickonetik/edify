@@ -88,13 +88,40 @@ export class DatabaseModule implements OnModuleInit, OnModuleDestroy {
           last_name TEXT,
           avatar_url TEXT,
           created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-          updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+          updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+          banned_at TIMESTAMP WITH TIME ZONE NULL,
+          ban_reason TEXT NULL
         );
         CREATE INDEX IF NOT EXISTS idx_users_telegram_user_id ON users(telegram_user_id);
+      `);
+      // Add ban columns if table already existed without them (e.g. from 001)
+      await this.pool.query(`
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS banned_at TIMESTAMP WITH TIME ZONE NULL;
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_reason TEXT NULL;
       `);
     } catch (error) {
       console.warn('Failed to create users table (may already exist):', error);
       // Don't throw - table might already exist
+    }
+
+    // Minimal audit_log for ban enforcement (EPIC 4 will extend)
+    try {
+      await this.pool.query(`
+        CREATE TABLE IF NOT EXISTS audit_log (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          actor_user_id UUID NULL,
+          action TEXT NOT NULL,
+          entity_type TEXT NOT NULL,
+          entity_id TEXT NOT NULL,
+          meta JSONB NULL,
+          trace_id TEXT NULL,
+          created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+        );
+        CREATE INDEX IF NOT EXISTS idx_audit_log_created_at ON audit_log(created_at);
+        CREATE INDEX IF NOT EXISTS idx_audit_log_action ON audit_log(action);
+      `);
+    } catch (error) {
+      console.warn('Failed to create audit_log table (may already exist):', error);
     }
   }
 

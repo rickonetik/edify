@@ -13,7 +13,12 @@ interface UserDbModel {
   avatar_url: string | null;
   created_at: Date;
   updated_at: Date;
+  banned_at: Date | null;
+  ban_reason: string | null;
 }
+
+/** User with optional bannedAt (server-side only, not in public contract) */
+export type UserWithBan = ContractsV1.UserV1 & { bannedAt?: string | null };
 
 /**
  * Users repository for database operations
@@ -32,7 +37,7 @@ export class UsersRepository {
     firstName?: string | null;
     lastName?: string | null;
     avatarUrl?: string | null;
-  }): Promise<ContractsV1.UserV1> {
+  }): Promise<UserWithBan> {
     if (!this.pool) {
       throw new Error('Database is disabled (SKIP_DB=1). Cannot perform database operations.');
     }
@@ -76,17 +81,7 @@ export class UsersRepository {
 
     const row = result.rows[0];
 
-    // Map to ContractsV1.UserV1
-    return {
-      id: row.id,
-      telegramUserId: row.telegram_user_id,
-      username: row.username ?? undefined,
-      firstName: row.first_name ?? undefined,
-      lastName: row.last_name ?? undefined,
-      avatarUrl: row.avatar_url ?? null,
-      createdAt: row.created_at.toISOString(),
-      updatedAt: row.updated_at.toISOString(),
-    };
+    return this.mapRowToUserWithBan(row);
   }
 
   /**
@@ -95,7 +90,7 @@ export class UsersRepository {
    * @param id - User ID (UUID)
    * @returns User data or null if not found
    */
-  async findById(id: string): Promise<ContractsV1.UserV1 | null> {
+  async findById(id: string): Promise<UserWithBan | null> {
     if (!this.pool) {
       throw new Error('Database is disabled (SKIP_DB=1). Cannot perform database operations.');
     }
@@ -112,9 +107,10 @@ export class UsersRepository {
       return null;
     }
 
-    const row = result.rows[0];
+    return this.mapRowToUserWithBan(result.rows[0]);
+  }
 
-    // Map to ContractsV1.UserV1
+  private mapRowToUserWithBan(row: UserDbModel): UserWithBan {
     return {
       id: row.id,
       telegramUserId: row.telegram_user_id,
@@ -124,6 +120,7 @@ export class UsersRepository {
       avatarUrl: row.avatar_url ?? null,
       createdAt: row.created_at.toISOString(),
       updatedAt: row.updated_at.toISOString(),
+      bannedAt: row.banned_at ? row.banned_at.toISOString() : null,
     };
   }
 }

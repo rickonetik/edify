@@ -98,29 +98,38 @@ pnpm install
 pnpm verify
 ```
 
-### Development
+### Запуск проекта (одна схема)
+
+Перед первым запуском ничего вручную не нужно: скрипт сам создаёт `.env` из `.env.example` и подставляет `JWT_ACCESS_SECRET`, если его нет.
 
 ```bash
-# Запустить все приложения параллельно
-pnpm dev
-
-# Или отдельно:
-pnpm --filter @tracked/api dev
-pnpm --filter @tracked/webapp dev
-pnpm --filter @tracked/bot dev
+# API + Webapp (рекомендуется для разработки)
+pnpm dev:app
 ```
+
+- **API**: http://localhost:3001
+- **Webapp**: http://localhost:5173 (если порт занят — Vite возьмёт следующий, например 5174)
+
+Для Telegram-авторизации в Mini App в `.env` нужно задать `TELEGRAM_BOT_TOKEN` (без него POST /auth/telegram вернёт 503).
+
+```bash
+# Все приложения (API + Webapp + Bot)
+pnpm dev
+```
+
+Бот требует `BOT_TOKEN` в `.env`; если его нет, процесс бота упадёт при старте.
 
 ### Infrastructure
 
 ```bash
-# Скопировать .env.example в .env
-cp .env.example .env
+# Запустить инфраструктуру (Postgres, Redis, MinIO)
+pnpm infra:up
 
-# Запустить инфраструктуру
-docker compose -f infra/docker-compose.yml --env-file .env up -d
+# Миграции (если используете БД)
+pnpm db:migrate
 
-# Проверить статус
-docker compose -f infra/docker-compose.yml ps
+# Остановить
+pnpm infra:down
 ```
 
 ### Quality Gates
