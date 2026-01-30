@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.5] - 2026-01-30 - Mini App env check runbook, PR checklist
+
+### Added
+
+- **Runbook** — `docs/runbooks/mini-app-env-triage.md`: один короткий прогон (printenv, телеметрия [load-env], Mini App ?debug=1), кейсы A–E, чеклист для отчёта
+- **PR** — `.github/MINI_APP_ENV_CHECK_PR.md`: шаблон для вставки в PR-комментарий (результат прогона env + Mini App)
+
+### Changed
+
+- Runbook: ожидание printenv «0 и 0»; проверка URL запросов; быстрый фикс кейса C (очистка storage + переоткрытие Mini App); требование стабильных len/sha между перезапусками
+
 ## [0.3.4.5] - 2026-01-30 - Ban enforcement (Story 3.5), stable dev startup
 
 ### Added

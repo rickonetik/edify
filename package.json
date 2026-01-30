@@ -1,6 +1,6 @@
 {
   "name": "tracked-lms",
-  "version": "0.3.4.5",
+  "version": "0.3.5",
   "private": true,
   "packageManager": "pnpm@9.15.4",
   "scripts": {
