@@ -1,36 +1,27 @@
-import { z } from 'zod';
-import type { ErrorCode } from '../../errors/codes.js';
+export type ErrorCode =
+  | 'UNAUTHORIZED'
+  | 'FORBIDDEN'
+  | 'NOT_FOUND'
+  | 'VALIDATION_ERROR'
+  | 'RATE_LIMITED'
+  | 'CONFLICT'
+  | 'INTERNAL'
+  | 'BAD_GATEWAY'
+  | 'TIMEOUT'
+  | 'UNKNOWN';
 
-/**
- * API Error V1
- */
-export interface ApiErrorV1 {
-  code: ErrorCode | string;
+export type FieldError = { field: string; message: string };
+
+export type ErrorPayload = {
+  code: ErrorCode;
   message: string;
+  details?: Record<string, unknown>;
+  fieldErrors?: FieldError[];
+};
+
+export type ErrorResponse = {
+  error: ErrorPayload;
   requestId: string;
-  details?: unknown;
-}
+};
 
-/**
- * API Error Response V1
- */
-export interface ApiErrorResponseV1 {
-  error: ApiErrorV1;
-}
-
-/**
- * Zod schema for ApiErrorV1
- */
-export const ApiErrorV1Schema = z.object({
-  code: z.string(),
-  message: z.string(),
-  requestId: z.string(),
-  details: z.unknown().optional(),
-});
-
-/**
- * Zod schema for ApiErrorResponseV1
- */
-export const ApiErrorResponseV1Schema = z.object({
-  error: ApiErrorV1Schema,
-});
+export type ApiOk<T> = { data: T; requestId: string };

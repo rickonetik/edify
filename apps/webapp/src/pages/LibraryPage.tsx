@@ -1,90 +1,8 @@
-import React, { useState, useMemo } from 'react';
-import { useSearchParams, Link, useNavigate } from 'react-router-dom';
+import { useState, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Input, Button, Card, Skeleton, EmptyState, ErrorState } from '../shared/ui/index.js';
-
-// Types
-type Course = {
-  id: string;
-  title: string;
-  subtitle?: string;
-  progress?: number; // 0..100
-  minutes?: number;
-  isNew?: boolean;
-  badge?: string; // например "PRO"
-};
-
-type News = {
-  id: string;
-  title: string;
-  desc: string;
-};
-
-// Mock data
-const catalogCourses: Course[] = [
-  { id: '1', title: 'Crypto Compliance', subtitle: 'Basics', progress: 40, isNew: false },
-  { id: '2', title: 'Web 3.0', subtitle: 'Fundamentals', progress: 0, isNew: false },
-  { id: '3', title: 'Cybersecurity', subtitle: 'Essentials', minutes: 12, isNew: false },
-  { id: '4', title: 'Anti-Fraud', subtitle: 'Investigations', minutes: 7, isNew: true },
-  { id: '5', title: 'AML Compliance', subtitle: 'Advanced', progress: 25, isNew: false },
-  {
-    id: '6',
-    title: 'KYC Procedures',
-    subtitle: 'Complete Guide',
-    progress: 60,
-    minutes: 15,
-    isNew: false,
-  },
-  { id: '7', title: 'Blockchain Security', subtitle: 'Best Practices', progress: 17, isNew: false },
-  { id: '8', title: 'DeFi Regulations', subtitle: 'EU Framework', minutes: 8, isNew: true },
-  { id: '9', title: 'Smart Contracts', subtitle: 'Audit & Security', progress: 75, isNew: false },
-  { id: '10', title: 'NFT Marketplace', subtitle: 'Legal Aspects', progress: 10, isNew: false },
-  { id: '11', title: 'Data Privacy', subtitle: 'GDPR & Crypto', progress: 30, isNew: false },
-  {
-    id: '12',
-    title: 'Risk Management',
-    subtitle: 'Financial Crime',
-    progress: 45,
-    minutes: 20,
-    isNew: false,
-  },
-  { id: '13', title: 'Token Economics', subtitle: 'Regulatory View', isNew: false, badge: 'PRO' },
-  { id: '14', title: 'Stablecoin Compliance', subtitle: 'US & EU', progress: 5, isNew: false },
-  { id: '15', title: 'Exchange Operations', subtitle: 'Licensing', minutes: 25, isNew: true },
-];
-
-const recommendedCourses: Course[] = [
-  { id: '16', title: 'AI & Compliance', subtitle: 'На основе вашего прогресса', isNew: true },
-  { id: '17', title: 'Data Security', subtitle: 'Enterprise Level', isNew: false },
-  {
-    id: '18',
-    title: 'Project Management',
-    subtitle: 'Agile & Compliance',
-    minutes: 8,
-    isNew: true,
-  },
-  { id: '19', title: 'RegTech Solutions', subtitle: 'Automation', progress: 0, isNew: false },
-  { id: '20', title: 'Crypto Tax', subtitle: 'International', minutes: 12, isNew: false },
-  { id: '21', title: 'Whale Transactions', subtitle: 'Monitoring', isNew: false },
-  { id: '22', title: 'Cross-Border Payments', subtitle: 'Compliance', progress: 15, isNew: false },
-];
-
-const news: News[] = [
-  {
-    id: '1',
-    title: 'Новый модуль',
-    desc: 'добавлен в курс CryptoCompliance',
-  },
-  {
-    id: '2',
-    title: 'Обновление требований KYC',
-    desc: 'Новые правила идентификации клиентов',
-  },
-  {
-    id: '3',
-    title: 'Изменения в DeFi регулировании',
-    desc: 'Европейский регулятор опубликовал рекомендации',
-  },
-];
+import { useLibrary } from '../shared/query/index.js';
+import type { Course } from '@tracked/shared';
 
 // Section Header Component
 function SectionHeader({ title, right }: { title: string; right?: React.ReactNode }) {
@@ -198,7 +116,7 @@ function CatalogCourseCard({ course }: { course: Course }) {
               >
                 {course.title}
               </div>
-              {course.isNew && (
+              {course.badges?.includes('NEW') && (
                 <div
                   style={{
                     padding: '2px var(--sp-2)',
@@ -213,23 +131,26 @@ function CatalogCourseCard({ course }: { course: Course }) {
                   New
                 </div>
               )}
-              {course.badge && (
-                <div
-                  style={{
-                    padding: '2px var(--sp-2)',
-                    backgroundColor: 'var(--accent-2)',
-                    borderRadius: 'var(--r-sm)',
-                    fontSize: 'var(--text-xs)',
-                    color: 'var(--bg)',
-                    fontWeight: 'var(--font-weight-medium)',
-                    flexShrink: 0,
-                  }}
-                >
-                  {course.badge}
-                </div>
-              )}
+              {course.badges
+                ?.filter((b) => b !== 'NEW')
+                .map((badge) => (
+                  <div
+                    key={badge}
+                    style={{
+                      padding: '2px var(--sp-2)',
+                      backgroundColor: 'var(--accent-2)',
+                      borderRadius: 'var(--r-sm)',
+                      fontSize: 'var(--text-xs)',
+                      color: 'var(--bg)',
+                      fontWeight: 'var(--font-weight-medium)',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {badge}
+                  </div>
+                ))}
             </div>
-            {course.subtitle && (
+            {course.description && (
               <div
                 style={{
                   fontSize: 'var(--text-sm)',
@@ -237,7 +158,7 @@ function CatalogCourseCard({ course }: { course: Course }) {
                   marginBottom: 'var(--sp-2)',
                 }}
               >
-                {course.subtitle}
+                {course.description}
               </div>
             )}
             <div
@@ -250,12 +171,12 @@ function CatalogCourseCard({ course }: { course: Course }) {
               }}
             >
               <div>
-                {course.progress !== undefined && `${course.progress}%`}
-                {course.minutes !== undefined && `${course.minutes} мин`}
-                {course.progress === undefined && course.minutes === undefined && 'Новый курс'}
+                {course.progressPct > 0 && `${course.progressPct}%`}
+                {course.durationMinutes && `${course.durationMinutes} мин`}
+                {course.progressPct === 0 && !course.durationMinutes && 'Новый курс'}
               </div>
             </div>
-            {course.progress !== undefined && <ProgressBar progress={course.progress} />}
+            {course.progressPct > 0 && <ProgressBar progress={course.progressPct} />}
           </div>
         </div>
       </Card>
@@ -285,7 +206,7 @@ function RecommendedCourseCard({ course }: { course: Course }) {
           flexDirection: 'column',
         }}
       >
-        {course.isNew && (
+        {course.badges?.includes('NEW') && (
           <div
             style={{
               position: 'absolute',
@@ -340,12 +261,12 @@ function RecommendedCourseCard({ course }: { course: Course }) {
             textOverflow: 'ellipsis',
             lineHeight: '1.4',
             height: '2.8em',
-            paddingRight: course.isNew ? 'var(--sp-6)' : 0,
+            paddingRight: course.badges?.includes('NEW') ? 'var(--sp-6)' : 0,
           }}
         >
           {course.title}
         </div>
-        {course.subtitle && (
+        {course.description && (
           <div
             style={{
               fontSize: 'var(--text-xs)',
@@ -358,7 +279,7 @@ function RecommendedCourseCard({ course }: { course: Course }) {
               textOverflow: 'ellipsis',
             }}
           >
-            {course.subtitle}
+            {course.description}
           </div>
         )}
       </Card>
@@ -366,8 +287,8 @@ function RecommendedCourseCard({ course }: { course: Course }) {
   );
 }
 
-// News Card Component
-function NewsCard({ news }: { news: News }) {
+// News Card Component (kept for compatibility, but news not in LibraryResponse yet)
+function NewsCard({ news }: { news: { id: string; title: string; desc: string } }) {
   return (
     <Link to={`/update/${news.id}`} style={{ textDecoration: 'none', display: 'block' }}>
       <Card
@@ -462,10 +383,30 @@ function LoadingState() {
 
 // Main LibraryPage Component
 export function LibraryPage() {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const state = searchParams.get('state') || 'default';
+  const { data, isLoading, isError, uiError, refetch } = useLibrary();
   const [searchQuery, setSearchQuery] = useState('');
+
+  const catalogCourses = data?.catalog || [];
+  const recommendedCourses = data?.recommendations || [];
+  // Local mock news (not from API, as per Story 1.5)
+  const news: Array<{ id: string; title: string; desc: string }> = [
+    {
+      id: '1',
+      title: 'Новый модуль',
+      desc: 'добавлен в курс CryptoCompliance',
+    },
+    {
+      id: '2',
+      title: 'Обновление требований KYC',
+      desc: 'Новые правила идентификации клиентов',
+    },
+    {
+      id: '3',
+      title: 'Изменения в DeFi регулировании',
+      desc: 'Европейский регулятор опубликовал рекомендации',
+    },
+  ];
 
   // Filter courses based on search query
   const filteredCatalogCourses = useMemo(() => {
@@ -474,7 +415,7 @@ export function LibraryPage() {
     }
     const query = searchQuery.toLowerCase();
     return catalogCourses.filter((course) => course.title.toLowerCase().includes(query));
-  }, [searchQuery]);
+  }, [searchQuery, catalogCourses]);
 
   const filteredRecommendedCourses = useMemo(() => {
     if (!searchQuery.trim()) {
@@ -482,44 +423,62 @@ export function LibraryPage() {
     }
     const query = searchQuery.toLowerCase();
     return recommendedCourses.filter((course) => course.title.toLowerCase().includes(query));
-  }, [searchQuery]);
+  }, [searchQuery, recommendedCourses]);
 
   const hasSearchResults =
     filteredCatalogCourses.length > 0 || filteredRecommendedCourses.length > 0;
   const isSearchActive = searchQuery.trim().length > 0;
 
   // Loading state
-  if (state === 'loading') {
+  if (isLoading) {
     return <LoadingState />;
   }
 
-  // Empty state
-  if (state === 'empty') {
+  // Error state
+  if (isError && uiError) {
+    return (
+      <div style={{ padding: 'var(--sp-4)' }}>
+        <ErrorState
+          title={uiError.title}
+          description={uiError.description}
+          actionLabel="Повторить"
+          onAction={() => refetch()}
+        />
+      </div>
+    );
+  }
+
+  // Empty state (no data or empty after filtering)
+  if (!data || (catalogCourses.length === 0 && recommendedCourses.length === 0)) {
     return (
       <div style={{ padding: 'var(--sp-4)' }}>
         <EmptyState
-          title="Каталог пуст"
-          description="Попробуйте изменить запрос или сбросить фильтр"
-          actionLabel="Перейти в обучение"
+          title={isSearchActive ? 'Ничего не найдено' : 'Каталог пуст'}
+          description={
+            isSearchActive ? 'Попробуйте изменить запрос или сбросить фильтр' : 'Попробуйте позже'
+          }
+          actionLabel={isSearchActive ? 'Сбросить поиск' : 'Перейти в обучение'}
           onAction={() => {
-            navigate('/learn');
+            if (isSearchActive) {
+              setSearchQuery('');
+            } else {
+              navigate('/learn');
+            }
           }}
         />
       </div>
     );
   }
 
-  // Error state
-  if (state === 'error') {
+  // Empty search results
+  if (isSearchActive && !hasSearchResults) {
     return (
       <div style={{ padding: 'var(--sp-4)' }}>
-        <ErrorState
-          title="Не удалось загрузить каталог"
-          description="Попробуйте ещё раз"
-          actionLabel="Повторить"
-          onAction={() => {
-            navigate('/library');
-          }}
+        <EmptyState
+          title="Ничего не найдено"
+          description="Попробуйте изменить запрос или сбросить фильтр"
+          actionLabel="Сбросить поиск"
+          onAction={() => setSearchQuery('')}
         />
       </div>
     );

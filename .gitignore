@@ -9,3 +9,5 @@ apps/**/.turbo/
 coverage/
 .DS_Store
 *.log
+# Compiled JS files in src/ (should be in dist/)
+packages/shared/src/env/validate.js

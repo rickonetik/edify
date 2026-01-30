@@ -16,6 +16,7 @@ export const STARTUP_TIMEOUT = 30000; // 30 seconds total
 
 let apiProcess = null;
 let apiLogFile = null;
+let built = false; // Cache flag to avoid rebuilding on every startApi() call
 
 async function waitForPort(port, timeout = PORT_TIMEOUT) {
   const start = Date.now();
@@ -81,6 +82,12 @@ export async function startApi({
   swaggerEnabled = false,
   extraEnv = {},
 } = {}) {
+  // Build API first (required before starting) - but only once per test run
+  if (!built) {
+    await buildApi();
+    built = true;
+  }
+  
   // Ensure previous process is fully stopped and port is free
   await stopApi();
   await waitForPortFree(API_PORT, 5000);

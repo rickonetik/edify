@@ -1,51 +1,29 @@
-import { z } from 'zod';
-import type { Id, IsoDateTime } from './common.js';
+import type { ApiOk } from './errors.js';
+import type { ID } from './common.js';
+import type { Course } from './course.js';
 
-/**
- * Lesson video content
- */
-export type LessonVideoV1 =
-  | { kind: 'youtube'; youtubeId: string }
-  | { kind: 'upload'; key: string; mime: string; size: number; originalFilename: string }
-  | { kind: 'none' };
-
-/**
- * Lesson entity V1
- */
-export interface LessonV1 {
-  id: Id;
-  courseId: Id;
+export type Lesson = {
+  id: ID;
+  courseId: ID;
   title: string;
   order: number;
-  contentMarkdown?: string | null;
-  updatedAt: IsoDateTime;
-  video?: LessonVideoV1;
-}
+  durationMinutes?: number;
+  progressPct?: number;
+  isCompleted: boolean;
+};
 
-/**
- * Zod schema for LessonVideoV1
- */
-const LessonVideoV1Schema = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('youtube'), youtubeId: z.string() }),
-  z.object({
-    kind: z.literal('upload'),
-    key: z.string(),
-    mime: z.string(),
-    size: z.number(),
-    originalFilename: z.string(),
-  }),
-  z.object({ kind: z.literal('none') }),
-]);
+export type LearnSummary = {
+  greetingName: string;
+  currentCourse?: Course;
+  nextLesson?: Lesson;
+  continueLessons: Lesson[];
+  myCourses: Course[];
+  news: { id: ID; title: string; description?: string; badge?: string }[];
+};
 
-/**
- * Zod schema for LessonV1
- */
-export const LessonV1Schema = z.object({
-  id: z.string(),
-  courseId: z.string(),
-  title: z.string(),
-  order: z.number(),
-  contentMarkdown: z.string().nullable().optional(),
-  updatedAt: z.string(),
-  video: LessonVideoV1Schema.optional(),
-});
+export type LearnResponse = ApiOk<LearnSummary>;
+
+export type CourseResponse = ApiOk<{
+  course: Course;
+  lessons: Lesson[];
+}>;

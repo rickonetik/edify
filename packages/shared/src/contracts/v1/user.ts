@@ -1,20 +1,21 @@
+import type { ApiOk } from './errors.js';
+import type { ID, ISODateTime, Locale } from './common.js';
 import { z } from 'zod';
-import type { Id, IsoDateTime, UrlString } from './common.js';
 
 /**
  * User entity V1
  */
 export interface UserV1 {
-  id: Id;
+  id: ID;
   telegramUserId?: string;
   username?: string;
   firstName?: string;
   lastName?: string;
-  avatarUrl?: UrlString | null;
-  createdAt: IsoDateTime;
-  updatedAt: IsoDateTime;
+  avatarUrl?: string | null;
+  createdAt: ISODateTime;
+  updatedAt: ISODateTime;
   /** Set when user is banned (internal/enforcement); optional in response */
-  bannedAt?: IsoDateTime | null;
+  bannedAt?: ISODateTime | null;
 }
 
 /**
@@ -31,3 +32,15 @@ export const UserV1Schema = z.object({
   updatedAt: z.string(),
   bannedAt: z.string().nullable().optional(),
 });
+
+export type User = {
+  id: ID;
+  name: string;
+  handle?: string;
+  avatarUrl?: string;
+  plan: 'free' | 'pro';
+  locale: Locale;
+  createdAt: ISODateTime;
+};
+
+export type MeResponse = ApiOk<User>;
