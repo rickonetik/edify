@@ -143,6 +143,8 @@ pnpm verify:workspace
 pnpm verify:deep-imports
 ```
 
+**Foundation tests** (`pnpm test:foundation`): требуют `JWT_ACCESS_SECRET`; без него API не стартует и тесты, поднимающие API, падают. Для RBAC-тестов нужны также `DATABASE_URL` и инфраструктура (см. runbook Story 4.1).
+
 ## Project Structure
 
 ```

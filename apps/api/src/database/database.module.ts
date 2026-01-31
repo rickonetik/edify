@@ -1,6 +1,8 @@
-import { Module, Global, OnModuleInit, OnModuleDestroy, Optional } from '@nestjs/common';
+import { Module, Global, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { Pool } from 'pg';
 import { ApiEnvSchema, validateOrThrow } from '@tracked/shared';
+import { runMigrations } from './migrations.js';
 
 // Allow DATABASE_URL to be optional when SKIP_DB=1
 const skipDb = process.env.SKIP_DB === '1';
@@ -28,30 +30,40 @@ const isDbDisabled = skipDb || !hasDatabaseUrl;
   providers: [
     {
       provide: Pool,
-      useFactory: () => {
-        // Read at factory call time (Nest may call this after env is loaded)
+      useFactory: async (): Promise<Pool | null> => {
         const skip = process.env.SKIP_DB === '1';
         const url = process.env.DATABASE_URL;
-        if (skip || !url) {
-          return null;
-        }
-        return new Pool({
+        if (skip || !url) return null;
+        const pool = new Pool({
           connectionString: url,
           connectionTimeoutMillis: 3000, // Fail-fast: 3 seconds
         });
+        try {
+          await Promise.race([
+            pool.query('SELECT 1'),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Database connection timeout (3s)')), 3000),
+            ),
+          ]);
+        } catch (error) {
+          await pool.end();
+          console.error('Database init failed:', error);
+          throw error;
+        }
+        return pool;
       },
     },
   ],
   exports: [Pool],
 })
 export class DatabaseModule implements OnModuleInit, OnModuleDestroy {
-  constructor(@Optional() private readonly pool: Pool | null) {}
+  constructor(private readonly moduleRef: ModuleRef) {}
 
   async onModuleInit() {
-    // Check if pool is null (disabled)
-    // If pool is null, it means isDbDisabled was true at module load time
-    if (!this.pool) {
-      // Only warn when DB is actually disabled (optional injection can give null even when Pool provider returns value if resolution order differs)
+    // Eagerly resolve Pool and run migrations on startup (not when first consumer requests it).
+    // Guarantees: "API start" == "migrations applied".
+    const pool = this.moduleRef.get(Pool, { strict: false });
+    if (!pool) {
       const urlNow = process.env.DATABASE_URL;
       if (!urlNow && process.env.SKIP_DB !== '1') {
         console.warn(
@@ -60,74 +72,18 @@ export class DatabaseModule implements OnModuleInit, OnModuleDestroy {
       }
       return;
     }
-
-    // If we have a pool, DB is enabled - no warning needed, proceed with connection test
-
-    // Test connection with fail-fast timeout
     try {
-      await Promise.race([
-        this.pool.query('SELECT 1'),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Database connection timeout (3s)')), 3000),
-        ),
-      ]);
+      await runMigrations(pool);
     } catch (error) {
-      console.error('Failed to connect to database:', error);
+      console.error('Failed to run migrations:', error);
       throw error;
-    }
-
-    // Ensure users table exists (run migration if needed)
-    // In production, migrations should be run separately
-    try {
-      await this.pool.query(`
-        CREATE TABLE IF NOT EXISTS users (
-          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-          telegram_user_id TEXT NOT NULL UNIQUE,
-          username TEXT,
-          first_name TEXT,
-          last_name TEXT,
-          avatar_url TEXT,
-          created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-          updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-          banned_at TIMESTAMP WITH TIME ZONE NULL,
-          ban_reason TEXT NULL
-        );
-        CREATE INDEX IF NOT EXISTS idx_users_telegram_user_id ON users(telegram_user_id);
-      `);
-      // Add ban columns if table already existed without them (e.g. from 001)
-      await this.pool.query(`
-        ALTER TABLE users ADD COLUMN IF NOT EXISTS banned_at TIMESTAMP WITH TIME ZONE NULL;
-        ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_reason TEXT NULL;
-      `);
-    } catch (error) {
-      console.warn('Failed to create users table (may already exist):', error);
-      // Don't throw - table might already exist
-    }
-
-    // Minimal audit_log for ban enforcement (EPIC 4 will extend)
-    try {
-      await this.pool.query(`
-        CREATE TABLE IF NOT EXISTS audit_log (
-          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-          actor_user_id UUID NULL,
-          action TEXT NOT NULL,
-          entity_type TEXT NOT NULL,
-          entity_id TEXT NOT NULL,
-          meta JSONB NULL,
-          trace_id TEXT NULL,
-          created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-        );
-        CREATE INDEX IF NOT EXISTS idx_audit_log_created_at ON audit_log(created_at);
-        CREATE INDEX IF NOT EXISTS idx_audit_log_action ON audit_log(action);
-      `);
-    } catch (error) {
-      console.warn('Failed to create audit_log table (may already exist):', error);
     }
   }
 
   async onModuleDestroy() {
-    if (this.pool) {
-      await this.pool.end();
+    const pool = this.moduleRef.get(Pool, { strict: false });
+    if (pool) {
+      await pool.end();
     }
   }
 }

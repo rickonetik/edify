@@ -10,6 +10,9 @@ export type { Id, IsoDateTime, UrlString } from './common.js';
 
 // Entity types
 export type { UserV1 } from './user.js';
+export type { PlatformRoleV1 } from './platform-role.js';
+export type { ExpertV1 } from './expert.js';
+export type { ExpertMemberV1, ExpertMemberRoleV1 } from './expert-member.js';
 export type { CourseV1 } from './course.js';
 export type { LessonV1, LessonVideoV1 } from './lesson.js';
 export type { InviteV1 } from './invite.js';
@@ -33,6 +36,10 @@ export type { AuthTelegramRequestV1, AuthTelegramResponseV1 } from './auth.js';
 // Zod schemas (for runtime validation)
 export {
   UserV1Schema,
+  PlatformRoleV1Schema,
+  ExpertV1Schema,
+  ExpertMemberV1Schema,
+  ExpertMemberRoleV1Schema,
   CourseV1Schema,
   LessonV1Schema,
   InviteV1Schema,

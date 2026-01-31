@@ -6,6 +6,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ApiEnvSchema, validateOrThrow } from '@tracked/shared';
 import { AppModule } from './app.module.js';
 import { createPinoLogger } from './common/logging/pino.js';
+import { requestIdPlugin } from './common/request-id/request-id.plugin.js';
 import { RequestIdInterceptor } from './common/request-id/request-id.interceptor.js';
 import { ApiExceptionFilter } from './common/errors/api-exception.filter.js';
 import { join } from 'node:path';
@@ -22,6 +23,9 @@ async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, adapter, {
     bufferLogs: false,
   });
+
+  // Register request-id plugin early (onRequest) so traceId is set before guards
+  await app.getHttpAdapter().getInstance().register(requestIdPlugin);
 
   app.useGlobalInterceptors(new RequestIdInterceptor());
   app.useGlobalFilters(new ApiExceptionFilter());
