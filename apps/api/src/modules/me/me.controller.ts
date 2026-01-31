@@ -67,6 +67,8 @@ export class MeController {
       firstName: user.firstName,
       lastName: user.lastName,
       avatarUrl: user.avatarUrl,
+      platformRole: ((user as { platformRole?: ContractsV1.PlatformRoleV1 }).platformRole ??
+        'user') as ContractsV1.PlatformRoleV1,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };

@@ -14,11 +14,16 @@ const fromDirname = resolve(__dirname, '../../../../../../.env');
 
 const preserveNodeEnv = process.env.NODE_ENV;
 const preserveSwaggerEnabled = process.env.SWAGGER_ENABLED;
+const preserveDatabaseUrl = process.env.DATABASE_URL;
 
-config({ path: fromCwd });
-if (!process.env.DATABASE_URL) {
-  config({ path: fromDirname });
+// In test env, skip .env load — rely on spawn env (RBAC tests pass DATABASE_URL explicitly)
+if (preserveNodeEnv !== 'test') {
+  config({ path: fromCwd, override: false });
+  if (!process.env.DATABASE_URL) {
+    config({ path: fromDirname, override: false });
+  }
 }
 
 if (preserveNodeEnv !== undefined) process.env.NODE_ENV = preserveNodeEnv;
 if (preserveSwaggerEnabled !== undefined) process.env.SWAGGER_ENABLED = preserveSwaggerEnabled;
+if (preserveDatabaseUrl !== undefined) process.env.DATABASE_URL = preserveDatabaseUrl;

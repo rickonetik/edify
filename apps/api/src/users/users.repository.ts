@@ -15,6 +15,7 @@ interface UserDbModel {
   updated_at: Date;
   banned_at: Date | null;
   ban_reason: string | null;
+  platform_role: string;
 }
 
 /** User with optional bannedAt (server-side only, not in public contract) */
@@ -85,6 +86,32 @@ export class UsersRepository {
   }
 
   /**
+   * Update user's platform role (idempotent)
+   */
+  async updatePlatformRole(
+    userId: string,
+    role: 'user' | 'moderator' | 'admin' | 'owner',
+  ): Promise<UserWithBan> {
+    if (!this.pool) {
+      throw new Error('Database is disabled (SKIP_DB=1). Cannot perform database operations.');
+    }
+
+    const query = `
+      UPDATE users
+      SET platform_role = $2, updated_at = NOW()
+      WHERE id = $1
+      RETURNING *
+    `;
+    const result = await this.pool.query<UserDbModel>(query, [userId, role]);
+
+    if (result.rows.length === 0) {
+      throw new Error(`User not found: ${userId}`);
+    }
+
+    return this.mapRowToUserWithBan(result.rows[0]);
+  }
+
+  /**
    * Find user by ID
    *
    * @param id - User ID (UUID)
@@ -111,6 +138,7 @@ export class UsersRepository {
   }
 
   private mapRowToUserWithBan(row: UserDbModel): UserWithBan {
+    const role = row.platform_role ?? 'user';
     return {
       id: row.id,
       telegramUserId: row.telegram_user_id,
@@ -118,6 +146,7 @@ export class UsersRepository {
       firstName: row.first_name ?? undefined,
       lastName: row.last_name ?? undefined,
       avatarUrl: row.avatar_url ?? null,
+      platformRole: role as 'user' | 'moderator' | 'admin' | 'owner',
       createdAt: row.created_at.toISOString(),
       updatedAt: row.updated_at.toISOString(),
       bannedAt: row.banned_at ? row.banned_at.toISOString() : null,

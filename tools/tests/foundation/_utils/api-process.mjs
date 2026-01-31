@@ -60,19 +60,22 @@ export async function buildApi() {
  * @param {Object} [options.extraEnv] - Additional environment variables to merge
  * @returns {Promise<void>}
  */
-async function waitForPortFree(port, timeout = 5000) {
+async function waitForPortFree(port, timeout = 8000) {
   const start = Date.now();
   while (Date.now() - start < timeout) {
     try {
-      const response = await fetch(`http://localhost:${port}/health`);
-      // Port is still in use
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      await fetch(`http://localhost:${port}/health`);
+      // Port is still in use, wait and retry
+      await new Promise((resolve) => setTimeout(resolve, 300));
     } catch (err) {
-      // Port is free (connection refused)
-      return true;
+      // Connection refused = port is free
+      return;
     }
   }
-  return false;
+  throw new Error(
+    `Port ${port} still in use after ${timeout}ms. ` +
+      `Previous API process may not have terminated. Run: lsof -i:${port}`,
+  );
 }
 
 export async function startApi({
@@ -81,9 +84,9 @@ export async function startApi({
   swaggerEnabled = false,
   extraEnv = {},
 } = {}) {
-  // Ensure previous process is fully stopped and port is free
+  // Ensure previous process is fully stopped and port is free before spawning
   await stopApi();
-  await waitForPortFree(API_PORT, 5000);
+  await waitForPortFree(API_PORT, 8000);
   
   return new Promise((resolve, reject) => {
     const cwd = process.cwd();
@@ -96,24 +99,28 @@ export async function startApi({
 
     // Build processEnv with all defaults
     // Note: We need PATH from process.env for pnpm to work, but we explicitly
-    // exclude SWAGGER_ENABLED to avoid contamination from previous test runs
+    // exclude SWAGGER_ENABLED and NODE_ENV so our explicit values are used
     const cleanProcessEnv = { ...process.env };
-    // Remove SWAGGER_ENABLED and NODE_ENV so our explicit values are used
     delete cleanProcessEnv.SWAGGER_ENABLED;
     delete cleanProcessEnv.NODE_ENV;
 
+    // When DB enabled (skipDb=false), DATABASE_URL must come ONLY from extraEnv (test env).
+    // Remove from cleanProcessEnv to avoid .env/parent contamination — API and test must share same DB.
+    if (!skipDb) {
+      delete cleanProcessEnv.DATABASE_URL;
+    }
+
     // When Swagger is enabled, API must run in development mode (Swagger is dev-only).
-    // Guarantee NODE_ENV=development for the "GET /docs returns 200 in development mode" test.
     const effectiveNodeEnv = swaggerEnabled ? 'development' : (nodeEnv || 'test');
 
     const processEnv = {
       ...cleanProcessEnv,
-      // Merge any extra env vars first
       ...extraEnv,
-      // Core settings (override extraEnv if needed)
       API_PORT: String(API_PORT),
       NODE_ENV: effectiveNodeEnv,
       SKIP_DB: skipDb ? '1' : '0',
+      // When DB enabled, enforce DATABASE_URL from extraEnv (test must pass it)
+      ...(skipDb ? {} : { DATABASE_URL: extraEnv.DATABASE_URL ?? process.env.DATABASE_URL }),
       // Swagger (default: disabled, but can be overridden by extraEnv)
       // Explicitly set based on parameter to ensure test control
       // IMPORTANT: Set AFTER extraEnv to ensure our value takes precedence
@@ -128,13 +135,18 @@ export async function startApi({
     // Force these so they are never overridden by cleanProcessEnv/extraEnv
     processEnv.NODE_ENV = effectiveNodeEnv;
     processEnv.SWAGGER_ENABLED = swaggerEnabled ? '1' : '0';
+    // When DB enabled, DATABASE_URL must be from extraEnv (explicit, last overwrite)
+    if (!skipDb) {
+      processEnv.DATABASE_URL = extraEnv.DATABASE_URL ?? process.env.DATABASE_URL ?? '';
+    }
 
     // Create unique log file for this API instance
     const timestamp = Date.now();
     apiLogFile = `/tmp/api-process.${timestamp}.log`;
     writeFileSync(apiLogFile, `=== API Process Log (${new Date().toISOString()}) ===\n`);
     writeFileSync(apiLogFile, `Command: node ${join(cwd, 'apps', 'api', 'dist', 'apps', 'api', 'src', 'main.js')}\n`, { flag: 'a' });
-    writeFileSync(apiLogFile, `Environment: NODE_ENV=${processEnv.NODE_ENV}, SWAGGER_ENABLED=${processEnv.SWAGGER_ENABLED}, API_PORT=${processEnv.API_PORT}\n\n`, { flag: 'a' });
+    const dbInfo = skipDb ? 'SKIP_DB=1' : `DATABASE_URL=${processEnv.DATABASE_URL ? '***' : 'MISSING'}, SKIP_DB=${processEnv.SKIP_DB}`;
+    writeFileSync(apiLogFile, `Environment: NODE_ENV=${processEnv.NODE_ENV}, SWAGGER_ENABLED=${processEnv.SWAGGER_ENABLED}, API_PORT=${processEnv.API_PORT}, ${dbInfo}\n\n`, { flag: 'a' });
 
     // Launch API directly via node (not via pnpm start) to avoid .env file dependency
     // This ensures foundation tests are completely independent of local .env

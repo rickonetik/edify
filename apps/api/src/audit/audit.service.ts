@@ -1,4 +1,4 @@
-import { Injectable, Optional } from '@nestjs/common';
+import { Injectable, Optional, Inject } from '@nestjs/common';
 import { Pool } from 'pg';
 
 export interface AuditEntry {
@@ -15,7 +15,7 @@ export interface AuditEntry {
  */
 @Injectable()
 export class AuditService {
-  constructor(@Optional() private readonly pool: Pool | null) {}
+  constructor(@Optional() @Inject(Pool) private readonly pool: Pool | null) {}
 
   async write(entry: AuditEntry): Promise<void> {
     if (!this.pool) return;
@@ -36,8 +36,13 @@ export class AuditService {
         ],
       );
     } catch (err) {
-      // Log but do not fail the request
-      console.warn('AuditService.write failed:', err instanceof Error ? err.message : err);
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn('AuditService.write failed:', msg);
+      // In test env, rethrow so RBAC tests fail when audit write fails (must-use same DB)
+      const strict = process.env.NODE_ENV === 'test' || process.env.AUDIT_STRICT === '1';
+      if (strict) {
+        throw err;
+      }
     }
   }
 }

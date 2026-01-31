@@ -62,7 +62,7 @@ export class TelegramAuthService {
       );
 
       // Upsert user
-      const user = await this.usersRepository.upsertByTelegramUserId({
+      let user = await this.usersRepository.upsertByTelegramUserId({
         telegramUserId: validated.telegramUserId,
         username: validated.username,
         firstName: validated.firstName,
@@ -70,7 +70,7 @@ export class TelegramAuthService {
         avatarUrl: validated.avatarUrl,
       });
 
-      // Ban enforcement: do not issue token
+      // Ban enforcement: do not issue token (banned always wins, no owner bootstrap for banned)
       if (user.bannedAt != null) {
         await this.auditService.write({
           actorUserId: user.id,
@@ -90,6 +90,12 @@ export class TelegramAuthService {
           code: ErrorCodes.USER_BANNED,
           message: 'Access denied: user is banned',
         });
+      }
+
+      // Owner bootstrap: if telegram_user_id matches OWNER_TELEGRAM_USER_ID, set platform_role=owner
+      const ownerTgId = env.OWNER_TELEGRAM_USER_ID;
+      if (ownerTgId && validated.telegramUserId === ownerTgId) {
+        user = await this.usersRepository.updatePlatformRole(user.id, 'owner');
       }
 
       // Generate access token

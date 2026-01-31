@@ -85,10 +85,11 @@ export class JwtAuthGuard implements CanActivate {
         });
       }
 
-      // Set user on request
+      // Set user on request (include platformRole for RBAC)
       request.user = {
         userId: payload.userId,
         telegramUserId: payload.telegramUserId,
+        platformRole: (user as { platformRole?: string }).platformRole ?? 'user',
       };
 
       return true;
