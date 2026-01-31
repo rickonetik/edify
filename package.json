@@ -31,6 +31,8 @@
     "x": "node tools/dev/run-with-timeout.mjs --timeout-ms=60000 --"
   },
   "devDependencies": {
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.17.2",
     "@eslint/js": "^9.39.1",
     "@typescript-eslint/eslint-plugin": "^8.46.4",
     "@typescript-eslint/parser": "^8.46.4",

@@ -37,9 +37,15 @@ importers:
       husky:
         specifier: ^9.1.7
         version: 9.1.7
+      jsonwebtoken:
+        specifier: ^9.0.3
+        version: 9.0.3
       lint-staged:
         specifier: ^15.2.11
         version: 15.5.2
+      pg:
+        specifier: ^8.17.2
+        version: 8.17.2
       prettier:
         specifier: ^3.4.2
         version: 3.8.1
@@ -132,6 +138,9 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.90.20
         version: 5.90.20(react@18.3.1)
+      '@tracked/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       react:
         specifier: ^18.3.1
         version: 18.3.1
