@@ -34,7 +34,7 @@ async function bootstrap() {
   app.enableCors({
     origin: true, // reflect request origin (ngrok, localhost, etc.)
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-request-id'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-request-id', 'x-expert-id'],
     credentials: true,
   });
 
