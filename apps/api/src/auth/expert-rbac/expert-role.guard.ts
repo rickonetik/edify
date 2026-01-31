@@ -115,7 +115,7 @@ export class ExpertRoleGuard implements CanActivate {
       meta: {
         expertId,
         requiredRole,
-        userRole,
+        userRole: userRole ?? null,
         path,
         method,
       },
