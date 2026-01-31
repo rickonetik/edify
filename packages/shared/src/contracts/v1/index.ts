@@ -33,6 +33,9 @@ export type {
 // Auth types
 export type { AuthTelegramRequestV1, AuthTelegramResponseV1 } from './auth.js';
 
+// Audit log types (admin read)
+export type { AuditLogEntryV1, AuditLogListResponseV1 } from './audit-log.js';
+
 // Zod schemas (for runtime validation)
 export {
   UserV1Schema,
@@ -53,4 +56,6 @@ export {
   GetLessonResponseV1Schema,
   AuthTelegramRequestV1Schema,
   AuthTelegramResponseV1Schema,
+  AuditLogEntryV1Schema,
+  AuditLogListResponseV1Schema,
 } from './schemas.js';

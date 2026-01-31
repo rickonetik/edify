@@ -14,6 +14,7 @@ const MIGRATION_LIST = [
   '002_add_users_ban_and_audit_log',
   '003_add_applied_migrations_and_platform_roles',
   '004_add_experts_and_members',
+  '005_add_audit_log_read_indexes',
 ] as const;
 
 export async function runMigrations(pool: Pool): Promise<void> {
