@@ -21,3 +21,4 @@ export {
   GetLessonResponseV1Schema,
 } from './endpoints.js';
 export { AuthTelegramRequestV1Schema, AuthTelegramResponseV1Schema } from './auth.js';
+export { AuditLogEntryV1Schema, AuditLogListResponseV1Schema } from './audit-log.js';
