@@ -110,9 +110,9 @@ export class AuditRepository {
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const limitParam = `$${paramIndex}`;
     values.push(limit + 1); // fetch one extra to know if there's a next page
     paramIndex += 1;
-    const limitParam = `$${paramIndex}`;
 
     const query = `
       SELECT id, created_at, actor_user_id, action, entity_type, entity_id, trace_id, meta
