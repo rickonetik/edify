@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.4] - 2026-01-31 - Story 4.4: admin audit read (filters + cursor pagination)
+
+### Added
+
+- **Story 4.4 — Admin audit read** — GET /admin/audit and GET /admin/audit/actions (admin-only), filters, cursor pagination, indexes, foundation tests
+  - Shared: `AuditLogEntryV1`, `AuditLogListResponseV1` contracts and schemas; meta always present (nullable)
+  - API: AdminAuditController (GET /admin/audit with actorUserId, action, entityType, entityId, traceId, from, to, limit, cursor; GET /admin/audit/actions); AuditRepository list/listActions; cursor validation (400 VALIDATION_ERROR on invalid base64/JSON/date/UUID)
+  - Migration 005: indexes for audit_log read (created_at DESC id DESC, trace_id, actor_user_id, entity_type+entity_id)
+  - Foundation tests: api.admin.audit-read.test.mjs (user 403, admin 200 + schema, filter traceId, cursor no overlap, invalid cursor 400, list actions)
+- **Runbook** — `docs/runbooks/STORY-4.4-FINAL-TEST-REPORT.md`; **Artifacts** — `PR_ARTIFACTS_STORY_4.4.md`
+
+### Fixed
+
+- Audit list LIMIT param index when no filters (was causing 500)
+
 ## [0.3.5] - 2026-01-30 - Mini App env check runbook, PR checklist
 
 ### Added
