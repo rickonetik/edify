@@ -1,7 +1,8 @@
 import { ContractsV1 } from '@tracked/shared';
 import { fetchJson, ApiClientError } from '../api/index.js';
-import { getTelegramInitData, waitForTelegramWebApp } from './telegram.js';
+import { waitForTelegramWebApp, waitForTelegramInitData } from './telegram.js';
 import { setAccessToken, clearAccessToken } from './tokenStorage.js';
+import { setUser, clearUser } from './userStorage.js';
 import { config } from '../config/flags.js';
 
 /**
@@ -17,7 +18,7 @@ export type BootstrapAuthResult =
  * Bootstrap authentication flow
  *
  * Main logic:
- * 1. Get initData from Telegram
+ * 1. Get initData from Telegram (or use provided initData)
  * 2. If no initData: leave token as-is (if exists), return { mode: 'no-initdata' }
  * 3. If initData exists: POST /auth/telegram, save token, return { mode: 'authenticated' }
  *
@@ -27,13 +28,16 @@ export type BootstrapAuthResult =
  *
  * Never blocks render forever.
  * Independent of REAL_API/USE_MSW flags (they only control where requests go).
+ *
+ * @param initDataOrNull - Optional initData from Telegram; if not provided, waits for it via waitForTelegramInitData()
  */
-export async function bootstrapAuth(): Promise<BootstrapAuthResult> {
-  // Wait for Telegram to inject WebApp (may be async in some clients, especially on mobile)
-  await waitForTelegramWebApp(5000);
+export async function bootstrapAuth(initDataOrNull?: string | null): Promise<BootstrapAuthResult> {
+  let initData: string | null = initDataOrNull ?? null;
 
-  // Get initData from Telegram
-  const initData = getTelegramInitData();
+  if (initData == null) {
+    await waitForTelegramWebApp(5000);
+    initData = await waitForTelegramInitData();
+  }
 
   // If no initData, leave token as-is and continue
   if (!initData) {
@@ -58,8 +62,9 @@ export async function bootstrapAuth(): Promise<BootstrapAuthResult> {
       },
     });
 
-    // Save access token
+    // Save access token and user (so UI shows name/avatar immediately before GET /me)
     setAccessToken(response.accessToken);
+    setUser(response.user);
 
     return { mode: 'authenticated' };
   } catch (error) {
@@ -67,9 +72,10 @@ export async function bootstrapAuth(): Promise<BootstrapAuthResult> {
     if (error instanceof ApiClientError) {
       const status = error.status;
 
-      // 401 or 400: authentication failed, clear token
+      // 401 or 400: authentication failed, clear token and user
       if (status === 401 || status === 400) {
         clearAccessToken();
+        clearUser();
         return { mode: 'rejected' };
       }
 

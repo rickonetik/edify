@@ -6,7 +6,7 @@ import './shared/ui/theme/global.css';
 import { startMocking } from './shared/mocks/startMocking.js';
 import { bootstrapAuth } from './shared/auth/bootstrapAuth.js';
 import { getAccessToken, clearAccessToken } from './shared/auth/tokenStorage.js';
-import { waitForTelegramWebApp, getTelegramInitData } from './shared/auth/telegram.js';
+import { waitForTelegramWebApp, waitForTelegramInitData } from './shared/auth/telegram.js';
 import {
   AuthDiagnosticProvider,
   type AuthDiagnostic,
@@ -76,14 +76,14 @@ async function bootstrap() {
   // Start mocking (never throws, always returns valid mode)
   await startMocking();
 
-  // Diagnostic: wait for Telegram and snapshot initData before auth
+  // Wait for Telegram WebApp and initData (Telegram may inject async, especially on mobile)
   const telegramReady = await waitForTelegramWebApp(5000);
-  const initDataSnapshot = getTelegramInitData();
+  const initDataSnapshot = await waitForTelegramInitData();
 
   // Bootstrap authentication (never throws, never blocks)
   let authResult: Awaited<ReturnType<typeof bootstrapAuth>> | null = null;
   try {
-    authResult = await bootstrapAuth();
+    authResult = await bootstrapAuth(initDataSnapshot);
   } catch (error) {
     console.warn('Bootstrap auth failed (non-blocking):', error);
   }

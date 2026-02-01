@@ -10,7 +10,13 @@ import {
   useToast,
 } from '../shared/ui/index.js';
 import { useMe } from '../shared/queries/useMe.js';
+import { useMyExpertSubscription } from '../shared/queries/useMyExpertSubscription.js';
+import { deriveExpertCtaState } from '../features/account/expertCtaState.js';
+import { BecomeExpertCard } from '../features/account/BecomeExpertCard.js';
+import { getTelegramDisplayUser, type TelegramDisplayUser } from '../shared/auth/telegram.js';
 import type { ContractsV1 } from '@tracked/shared';
+
+type DisplayUser = ContractsV1.UserV1 | TelegramDisplayUser | null;
 
 const mockReferralCode = 'KOL-9F2A';
 
@@ -86,7 +92,7 @@ function AvatarPlaceholderCircle({ size }: { size: number }) {
 const loadedAvatarUrls = new Set<string>();
 
 // Avatar: image from URL (with placeholder until loaded) or placeholder only
-function UserAvatar({ user }: { user: ContractsV1.UserV1 | null }) {
+function UserAvatar({ user }: { user: DisplayUser }) {
   const src = user?.avatarUrl ?? null;
   const size = 64;
   const alreadyLoaded = src ? loadedAvatarUrls.has(src) : false;
@@ -129,7 +135,7 @@ function UserAvatar({ user }: { user: ContractsV1.UserV1 | null }) {
   );
 }
 
-function displayName(user: ContractsV1.UserV1 | null): string {
+function displayName(user: DisplayUser): string {
   if (!user) return 'Пользователь';
   const first = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
   if (first) return first;
@@ -138,7 +144,7 @@ function displayName(user: ContractsV1.UserV1 | null): string {
 }
 
 // Profile Card Component
-function ProfileCard({ user }: { user: ContractsV1.UserV1 | null }) {
+function ProfileCard({ user }: { user: DisplayUser }) {
   const name = displayName(user);
   const handle = user?.username ? `@${user.username}` : '';
 
@@ -371,19 +377,13 @@ function StatsRow() {
   );
 }
 
-// Actions List Component
+// Actions List Component (expert CTA is in BecomeExpertCard)
 function ActionsList() {
   const navigate = useNavigate();
   const toast = useToast();
 
   return (
     <div>
-      <ListItem
-        title="Стать экспертом"
-        subtitle="Создавайте курсы и зарабатывайте"
-        right="›"
-        onClick={() => navigate('/creator/onboarding')}
-      />
       <ListItem
         title="Поддержка"
         subtitle="Помощь и обратная связь"
@@ -404,6 +404,44 @@ function ActionsList() {
       />
     </div>
   );
+}
+
+// DEV-only: force expert CTA state from ?expertCta=none|expired|active (browser test without MSW)
+function getForcedExpertCtaState(
+  searchParams: URLSearchParams,
+): 'none' | 'expired' | 'active' | null {
+  if (!import.meta.env.DEV) return null;
+  const p = searchParams.get('expertCta');
+  if (p === 'none' || p === 'expired' || p === 'active') return p;
+  return null;
+}
+
+// Expert CTA block: subscription state → NONE / EXPIRED / ACTIVE (Story 5.4)
+// Best-effort: any error → NONE (student). Card always visible, CTA always clickable.
+function ExpertCtaBlock() {
+  const [searchParams] = useSearchParams();
+  const expertCtaParam = searchParams.get('expertCta') as 'none' | 'expired' | 'active' | null;
+  const expertCta =
+    expertCtaParam && ['none', 'expired', 'active'].includes(expertCtaParam)
+      ? expertCtaParam
+      : undefined;
+
+  const forcedState = getForcedExpertCtaState(searchParams);
+  const { data, isLoading } = useMyExpertSubscription({ expertCta });
+  const subscription = data ?? null;
+  const state = forcedState ?? deriveExpertCtaState(subscription);
+
+  if (isLoading && forcedState == null) {
+    return (
+      <Card style={{ marginBottom: 'var(--sp-4)', padding: 'var(--sp-4)' }}>
+        <Skeleton width="40%" height="20px" style={{ marginBottom: 'var(--sp-2)' }} />
+        <Skeleton width="100%" height="16px" style={{ marginBottom: 'var(--sp-3)' }} />
+        <Skeleton width="100%" height="40px" radius="md" />
+      </Card>
+    );
+  }
+
+  return <BecomeExpertCard state={state} subscription={subscription} />;
 }
 
 // Loading State
@@ -431,7 +469,7 @@ export function AccountPage() {
   const navigate = useNavigate();
   const state = searchParams.get('state') || 'default';
   const { data: meData } = useMe();
-  const user = meData?.user ?? null;
+  const user: DisplayUser = meData?.user ?? getTelegramDisplayUser() ?? null;
 
   // Loading state
   if (state === 'loading') {
@@ -474,6 +512,8 @@ export function AccountPage() {
   return (
     <div style={{ padding: 'var(--sp-4)' }}>
       <ProfileCard user={user} />
+
+      <ExpertCtaBlock />
 
       {/* Referral Card */}
       <ReferralCard />

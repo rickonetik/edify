@@ -3,11 +3,28 @@
  */
 
 /**
+ * User-like object for display only (from API UserV1 or from initDataUnsafe.user)
+ */
+export interface TelegramDisplayUser {
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  avatarUrl?: string | null;
+}
+
+/**
  * Telegram WebApp type definition
  */
 interface TelegramWebApp {
   initData?: string;
-  initDataUnsafe?: unknown;
+  initDataUnsafe?: {
+    user?: {
+      first_name?: string;
+      last_name?: string;
+      username?: string;
+      photo_url?: string;
+    };
+  };
   version?: string;
   platform?: string;
   colorScheme?: 'light' | 'dark';
@@ -83,6 +100,7 @@ export function getTelegramInitData(): string | null {
 
 /**
  * Wait for window.Telegram.WebApp to be available (Telegram client may inject it async).
+ * Calls WebApp.ready() when available so Telegram finalizes initData (v0.3.4.3 / v0.4.4).
  * @param maxMs - Max time to wait in ms
  * @returns true if Telegram.WebApp is present, false on timeout
  */
@@ -92,6 +110,11 @@ export function waitForTelegramWebApp(maxMs: number = 2500): Promise<boolean> {
   return new Promise((resolve) => {
     const check = () => {
       if (window.Telegram?.WebApp) {
+        try {
+          window.Telegram.WebApp.ready?.();
+        } catch {
+          // ignore
+        }
         resolve(true);
         return;
       }
@@ -100,6 +123,55 @@ export function waitForTelegramWebApp(maxMs: number = 2500): Promise<boolean> {
         return;
       }
       setTimeout(check, 100);
+    };
+    check();
+  });
+}
+
+/**
+ * Get display-only user from Telegram initDataUnsafe (when initData string or API /me not available).
+ * Use for greeting/avatar so the user sees their name even before auth completes.
+ */
+export function getTelegramDisplayUser(): TelegramDisplayUser | null {
+  try {
+    if (typeof window === 'undefined') return null;
+    const u = window.Telegram?.WebApp?.initDataUnsafe?.user;
+    if (!u || typeof u !== 'object') return null;
+    return {
+      firstName: u.first_name,
+      lastName: u.last_name,
+      username: u.username,
+      avatarUrl: u.photo_url ?? null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+const INIT_DATA_RETRY_MS = 200;
+const INIT_DATA_RETRIES = 15;
+
+/**
+ * Wait for initData to appear (Telegram may set it asynchronously after WebApp object exists).
+ * Call after waitForTelegramWebApp.
+ * @returns initData string or null if not available after retries
+ */
+export function waitForTelegramInitData(): Promise<string | null> {
+  if (typeof window === 'undefined') return Promise.resolve(null);
+  return new Promise((resolve) => {
+    let attempt = 0;
+    const check = () => {
+      const data = getTelegramInitData();
+      if (data) {
+        resolve(data);
+        return;
+      }
+      attempt += 1;
+      if (attempt >= INIT_DATA_RETRIES) {
+        resolve(null);
+        return;
+      }
+      setTimeout(check, INIT_DATA_RETRY_MS);
     };
     check();
   });

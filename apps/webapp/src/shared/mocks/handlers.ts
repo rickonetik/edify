@@ -7,6 +7,8 @@ import {
   getMockLessons,
   getMockLesson,
   paginate,
+  mockExpertSubscriptionActive,
+  mockExpertSubscriptionExpired,
 } from './fixtures.js';
 
 /**
@@ -174,5 +176,57 @@ export const handlers = [
     };
 
     return HttpResponse.json(response);
+  }),
+
+  /**
+   * GET /me/expert-subscription — Story 5.4 (read path in 5.5)
+   * Query ?expertCta=none|expired|active for dev UX (default: none → 404).
+   * 404 in unified error format (ApiErrorResponseV1) so fetcher maps to NONE.
+   */
+  http.get('/me/expert-subscription', ({ request }) => {
+    const url = new URL(request.url);
+    const state = url.searchParams.get('expertCta') ?? 'none';
+
+    if (state === 'none') {
+      const errorResponse: ContractsV1.ApiErrorResponseV1 = {
+        error: {
+          code: 'NOT_FOUND',
+          message: 'No expert subscription',
+          requestId: `req-${Date.now()}`,
+        },
+      };
+      return HttpResponse.json(errorResponse, { status: 404 });
+    }
+
+    if (state === 'expired') {
+      return HttpResponse.json(mockExpertSubscriptionExpired);
+    }
+
+    return HttpResponse.json(mockExpertSubscriptionActive);
+  }),
+
+  /**
+   * GET /api/me/expert-subscription — same, for apps that use /api prefix
+   */
+  http.get('/api/me/expert-subscription', ({ request }) => {
+    const url = new URL(request.url);
+    const state = url.searchParams.get('expertCta') ?? 'none';
+
+    if (state === 'none') {
+      const errorResponse: ContractsV1.ApiErrorResponseV1 = {
+        error: {
+          code: 'NOT_FOUND',
+          message: 'No expert subscription',
+          requestId: `req-${Date.now()}`,
+        },
+      };
+      return HttpResponse.json(errorResponse, { status: 404 });
+    }
+
+    if (state === 'expired') {
+      return HttpResponse.json(mockExpertSubscriptionExpired);
+    }
+
+    return HttpResponse.json(mockExpertSubscriptionActive);
   }),
 ];

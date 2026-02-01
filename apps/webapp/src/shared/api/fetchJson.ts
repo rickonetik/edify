@@ -98,6 +98,11 @@ export async function fetchJson<T = unknown>(options: FetchJsonOptions): Promise
     ...customHeaders,
   };
 
+  // Skip ngrok browser warning when Mini App is opened via ngrok (otherwise requests get interstitial page)
+  if (baseUrl.includes('ngrok')) {
+    headers['ngrok-skip-browser-warning'] = 'true';
+  }
+
   // Add content-type only if body is present
   if (body !== undefined) {
     headers['content-type'] = 'application/json';
