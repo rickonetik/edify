@@ -4,11 +4,19 @@ import { ExpertRbacModule } from '../../auth/expert-rbac/expert-rbac.module.js';
 import { UsersModule } from '../../users/users.module.js';
 import { ExpertsModule } from '../../experts/experts.module.js';
 import { AuditModule } from '../../audit/audit.module.js';
+import { SubscriptionsModule } from '../../subscriptions/subscriptions.module.js';
 import { JwtAuthGuard } from '../../auth/session/jwt-auth.guard.js';
 import { ExpertController } from './expert.controller.js';
 
 @Module({
-  imports: [JwtModule, ExpertRbacModule, UsersModule, ExpertsModule, AuditModule],
+  imports: [
+    JwtModule,
+    ExpertRbacModule,
+    UsersModule,
+    ExpertsModule,
+    AuditModule,
+    SubscriptionsModule,
+  ],
   controllers: [ExpertController],
   providers: [JwtAuthGuard],
 })

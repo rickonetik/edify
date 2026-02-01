@@ -204,6 +204,29 @@ test('support member → GET /experts/:expertId/ping = 200', async (t) => {
     throw new Error(`Expected 201 from add member, got ${addRes.status}`);
   }
 
+  // Activate subscription so ping is allowed (Story 5.3 gating)
+  const ownerId = randomUUID();
+  const ownerTg = `tg_erbac2_owner_${randomUUID().replace(/-/g, '')}`;
+  await pool.query(
+    `INSERT INTO users (id, telegram_user_id, username, platform_role, created_at, updated_at)
+     VALUES ($1, $2, 'erbac2_owner', 'owner', NOW(), NOW())
+     ON CONFLICT (telegram_user_id) DO UPDATE SET platform_role = 'owner'`,
+    [ownerId, ownerTg],
+  );
+  const ownerToken = signToken(ownerId, ownerTg);
+  const grantRes = await fetch(`${API_URL}/admin/experts/${expertId}/subscription/grant-days`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${ownerToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ days: 30 }),
+  });
+  if (grantRes.status !== 200) {
+    await pool.end();
+    throw new Error(`Expected 200 from grant-days, got ${grantRes.status}`);
+  }
+
   const supportToken = signToken(supportId, supportTg);
   const res = await fetch(`${API_URL}/experts/${expertId}/ping`, {
     headers: { Authorization: `Bearer ${supportToken}` },
@@ -268,6 +291,29 @@ test('support member → GET /experts/:expertId/admin-ping = 403 FORBIDDEN_EXPER
     },
     body: JSON.stringify({ userId: supportId, role: 'support' }),
   });
+
+  // Activate subscription so 403 is from role deny, not subscription (Story 5.3 gating)
+  const ownerId = randomUUID();
+  const ownerTg = `tg_erbac3_owner_${randomUUID().replace(/-/g, '')}`;
+  await pool.query(
+    `INSERT INTO users (id, telegram_user_id, username, platform_role, created_at, updated_at)
+     VALUES ($1, $2, 'erbac3_owner', 'owner', NOW(), NOW())
+     ON CONFLICT (telegram_user_id) DO UPDATE SET platform_role = 'owner'`,
+    [ownerId, ownerTg],
+  );
+  const ownerToken = signToken(ownerId, ownerTg);
+  const grantRes = await fetch(`${API_URL}/admin/experts/${expertId}/subscription/grant-days`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${ownerToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ days: 30 }),
+  });
+  if (grantRes.status !== 200) {
+    await pool.end();
+    throw new Error(`Expected 200 from grant-days, got ${grantRes.status}`);
+  }
 
   const supportToken = signToken(supportId, supportTg);
   const res = await fetch(`${API_URL}/experts/${expertId}/admin-ping`, {
@@ -348,6 +394,29 @@ test('manager member → GET /experts/:expertId/admin-ping = 200', async (t) => 
     },
     body: JSON.stringify({ userId: managerId, role: 'manager' }),
   });
+
+  // Activate subscription (Story 5.3 gating)
+  const ownerId = randomUUID();
+  const ownerTg = `tg_erbac4_owner_${randomUUID().replace(/-/g, '')}`;
+  await pool.query(
+    `INSERT INTO users (id, telegram_user_id, username, platform_role, created_at, updated_at)
+     VALUES ($1, $2, 'erbac4_owner', 'owner', NOW(), NOW())
+     ON CONFLICT (telegram_user_id) DO UPDATE SET platform_role = 'owner'`,
+    [ownerId, ownerTg],
+  );
+  const ownerToken = signToken(ownerId, ownerTg);
+  const grantRes = await fetch(`${API_URL}/admin/experts/${expertId}/subscription/grant-days`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${ownerToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ days: 30 }),
+  });
+  if (grantRes.status !== 200) {
+    await pool.end();
+    throw new Error(`Expected 200 from grant-days, got ${grantRes.status}`);
+  }
 
   const managerToken = signToken(managerId, managerTg);
   const res = await fetch(`${API_URL}/experts/${expertId}/admin-ping`, {
@@ -486,6 +555,29 @@ test('trace_id in audit matches x-request-id', async (t) => {
     body: JSON.stringify({ userId: supportId, role: 'support' }),
   });
 
+  // Activate subscription so 403 is from role deny (Story 5.3 gating)
+  const ownerId = randomUUID();
+  const ownerTg = `tg_erbac6_owner_${randomUUID().replace(/-/g, '')}`;
+  await pool.query(
+    `INSERT INTO users (id, telegram_user_id, username, platform_role, created_at, updated_at)
+     VALUES ($1, $2, 'erbac6_owner', 'owner', NOW(), NOW())
+     ON CONFLICT (telegram_user_id) DO UPDATE SET platform_role = 'owner'`,
+    [ownerId, ownerTg],
+  );
+  const ownerToken = signToken(ownerId, ownerTg);
+  const grantRes = await fetch(`${API_URL}/admin/experts/${expertId}/subscription/grant-days`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${ownerToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ days: 30 }),
+  });
+  if (grantRes.status !== 200) {
+    await pool.end();
+    throw new Error(`Expected 200 from grant-days, got ${grantRes.status}`);
+  }
+
   const supportToken = signToken(supportId, supportTg);
   await fetch(`${API_URL}/experts/${expertId}/admin-ping`, {
     headers: {
@@ -555,6 +647,29 @@ test('manager member → GET /experts/:expertId/ping = 200', async (t) => {
     },
     body: JSON.stringify({ userId: managerId, role: 'manager' }),
   });
+
+  // Activate subscription (Story 5.3 gating)
+  const ownerId = randomUUID();
+  const ownerTg = `tg_erbac7_owner_${randomUUID().replace(/-/g, '')}`;
+  await pool.query(
+    `INSERT INTO users (id, telegram_user_id, username, platform_role, created_at, updated_at)
+     VALUES ($1, $2, 'erbac7_owner', 'owner', NOW(), NOW())
+     ON CONFLICT (telegram_user_id) DO UPDATE SET platform_role = 'owner'`,
+    [ownerId, ownerTg],
+  );
+  const ownerToken = signToken(ownerId, ownerTg);
+  const grantRes = await fetch(`${API_URL}/admin/experts/${expertId}/subscription/grant-days`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${ownerToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ days: 30 }),
+  });
+  if (grantRes.status !== 200) {
+    await pool.end();
+    throw new Error(`Expected 200 from grant-days, got ${grantRes.status}`);
+  }
 
   const managerToken = signToken(managerId, managerTg);
   const res = await fetch(`${API_URL}/experts/${expertId}/ping`, {
