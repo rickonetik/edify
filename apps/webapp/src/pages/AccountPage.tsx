@@ -200,16 +200,45 @@ function ProfileCard({
       >
         <UserAvatar user={user} />
         <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Row 1: displayName + Pro badge in one line; name truncates, badge stays visible */}
           <div
             style={{
-              fontSize: 'var(--text-lg)',
-              fontWeight: 'var(--font-weight-semibold)',
-              color: 'var(--fg)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
               marginBottom: 'var(--sp-1)',
             }}
           >
-            {name}
+            <span
+              style={{
+                fontSize: 'var(--text-lg)',
+                fontWeight: 'var(--font-weight-semibold)',
+                color: 'var(--fg)',
+                minWidth: 0,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {name}
+            </span>
+            {isPro && (
+              <span
+                style={{
+                  flex: '0 0 auto',
+                  padding: 'var(--sp-1) var(--sp-2)',
+                  backgroundColor: 'var(--accent)',
+                  borderRadius: 'var(--r-sm)',
+                  fontSize: 'var(--text-xs)',
+                  color: 'var(--bg)',
+                  fontWeight: 'var(--font-weight-medium)',
+                }}
+              >
+                Pro
+              </span>
+            )}
           </div>
+          {/* Row 2: @username */}
           {handle && (
             <div
               style={{
@@ -221,6 +250,7 @@ function ProfileCard({
               {handle}
             </div>
           )}
+          {/* Row 3: TG ID + copy icon */}
           {tgId && (
             <div
               style={{
@@ -244,21 +274,6 @@ function ProfileCard({
               >
                 <CopyIcon size={16} />
               </Button>
-            </div>
-          )}
-          {isPro && (
-            <div
-              style={{
-                display: 'inline-block',
-                padding: 'var(--sp-1) var(--sp-2)',
-                backgroundColor: 'var(--accent)',
-                borderRadius: 'var(--r-sm)',
-                fontSize: 'var(--text-xs)',
-                color: 'var(--bg)',
-                fontWeight: 'var(--font-weight-medium)',
-              }}
-            >
-              Pro
             </div>
           )}
         </div>
