@@ -8,6 +8,7 @@ import {
   paginate,
   mockExpertSubscriptionActive,
   mockExpertSubscriptionExpired,
+  getMockExpertApplicationResponse,
 } from './fixtures.js';
 
 /**
@@ -35,13 +36,51 @@ export interface MockResponse {
 export function tryHandleMockRequest(req: MockRequest): MockResponse | null {
   const { method, path, query = {} } = req;
 
-  // Only handle GET requests for now
-  if (method !== 'GET') {
+  const apiPrefix = '/api';
+  const pathWithoutApi = path.startsWith(apiPrefix) ? path.slice(apiPrefix.length) : path;
+
+  // GET /me/expert-application (Story 5.6) — only when expertApp query set; else passthrough
+  if (
+    method === 'GET' &&
+    (path === '/me/expert-application' || pathWithoutApi === '/me/expert-application')
+  ) {
+    const expertApp = query.expertApp;
+    if (
+      expertApp === 'none' ||
+      expertApp === 'pending' ||
+      expertApp === 'rejected' ||
+      expertApp === 'approved'
+    ) {
+      const response = getMockExpertApplicationResponse(expertApp);
+      return { status: 200, json: response, headers: { 'content-type': 'application/json' } };
+    }
     return null;
   }
 
-  // Parse path
-  const apiPrefix = '/api';
+  // POST /me/expert-application (Story 5.6) — only when expertApp query set; else passthrough
+  if (
+    method === 'POST' &&
+    (path === '/me/expert-application' || pathWithoutApi === '/me/expert-application')
+  ) {
+    const expertApp = query.expertApp;
+    if (
+      expertApp === 'none' ||
+      expertApp === 'pending' ||
+      expertApp === 'rejected' ||
+      expertApp === 'approved'
+    ) {
+      const response = getMockExpertApplicationResponse(
+        expertApp === 'none' ? 'pending' : expertApp,
+      );
+      return { status: 200, json: response, headers: { 'content-type': 'application/json' } };
+    }
+    return null;
+  }
+
+  // Only handle GET for remaining routes
+  if (method !== 'GET') {
+    return null;
+  }
 
   // GET /me/expert-subscription (Story 5.4) — path may be with or without /api
   if (path === '/me/expert-subscription' || path.startsWith('/me/expert-subscription?')) {

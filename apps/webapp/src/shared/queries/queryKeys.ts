@@ -14,6 +14,11 @@ export const me = () => ['me'] as const;
 export const meExpertSubscription = () => ['me', 'expert-subscription'] as const;
 
 /**
+ * Query key for /me/expert-application (Story 5.6)
+ */
+export const meExpertApplication = () => ['me', 'expert-application'] as const;
+
+/**
  * Query key for /library endpoint
  */
 export const library = (params?: { limit?: number; offset?: number }) => {

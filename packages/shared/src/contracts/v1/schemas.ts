@@ -27,3 +27,8 @@ export {
 } from './endpoints.js';
 export { AuthTelegramRequestV1Schema, AuthTelegramResponseV1Schema } from './auth.js';
 export { AuditLogEntryV1Schema, AuditLogListResponseV1Schema } from './audit-log.js';
+export {
+  ExpertApplicationStatusV1Schema,
+  ExpertApplicationV1Schema,
+} from './expert-application.js';
+export { MeExpertApplicationResponseV1Schema } from './me-expert-application.js';

@@ -9,6 +9,7 @@ import {
   Button,
 } from '../shared/ui/index.js';
 import { useMyExpertSubscription } from '../shared/queries/useMyExpertSubscription.js';
+import { useMyExpertApplication } from '../shared/queries/useMyExpertApplication.js';
 import { deriveExpertCtaState } from '../features/account/expertCtaState.js';
 import { getTelegramDisplayUser } from '../shared/auth/telegram.js';
 
@@ -59,6 +60,16 @@ function getForcedState(searchParams: URLSearchParams): 'none' | 'expired' | 'ac
   return null;
 }
 
+// DEV-only: force application state from ?expertApp=none|pending|rejected|approved
+function getForcedExpertApp(
+  searchParams: URLSearchParams,
+): 'none' | 'pending' | 'rejected' | 'approved' | null {
+  if (!import.meta.env.DEV) return null;
+  const p = searchParams.get('expertApp');
+  if (p === 'none' || p === 'pending' || p === 'rejected' || p === 'approved') return p;
+  return null;
+}
+
 export function CreatorOnboardingPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -69,9 +80,14 @@ export function CreatorOnboardingPage() {
       : undefined;
 
   const forcedState = getForcedState(searchParams);
+  const expertApp = getForcedExpertApp(searchParams) ?? undefined;
+
   const { data } = useMyExpertSubscription({ expertCta });
   const subscription = data ?? null;
   const state = forcedState ?? deriveExpertCtaState(subscription);
+
+  const { data: appData, submit, isSubmitting, refetch } = useMyExpertApplication({ expertApp });
+  const application = appData?.application ?? null;
 
   const displayUser = getTelegramDisplayUser();
   const username = displayUser?.username ?? '';
@@ -79,6 +95,33 @@ export function CreatorOnboardingPage() {
 
   const statusLabel =
     state === 'active' ? 'Вы эксперт' : state === 'expired' ? 'Подписка истекла' : 'Вы студент';
+
+  const applicationStatusLabel = !application
+    ? 'Нет заявки'
+    : application.status === 'pending'
+      ? 'Заявка на рассмотрении'
+      : application.status === 'rejected'
+        ? 'Отклонено'
+        : 'Одобрено';
+
+  const handleSubmitApplication = async () => {
+    try {
+      await submit(applicationText);
+      if (window.Telegram?.WebApp?.showPopup) {
+        window.Telegram.WebApp.showPopup({
+          title: 'Заявка подана',
+          message: 'Заявка на рассмотрении. Мы свяжемся с вами после проверки.',
+        });
+      }
+    } catch {
+      if (window.Telegram?.WebApp?.showPopup) {
+        window.Telegram.WebApp.showPopup({
+          title: 'Ошибка',
+          message: 'Не удалось отправить заявку. Попробуйте позже.',
+        });
+      }
+    }
+  };
 
   const handleCopyApplication = async () => {
     const ok = await copyToClipboard(applicationText);
@@ -96,12 +139,14 @@ export function CreatorOnboardingPage() {
         <CardHeader>
           <CardTitle>Стать экспертом</CardTitle>
           <CardDescription>
-            {statusLabel}.{' '}
+            {statusLabel}. Статус заявки: {applicationStatusLabel}.{' '}
             {state === 'active'
               ? 'Подписка активна. Ниже — информация для новых экспертов.'
               : state === 'expired'
                 ? 'Продлите подписку, чтобы снова публиковать курсы.'
-                : 'Подайте заявку, чтобы стать экспертом.'}
+                : application?.status === 'approved'
+                  ? 'Ожидайте активации (вручную после одобрения).'
+                  : 'Подайте заявку, чтобы стать экспертом.'}
           </CardDescription>
         </CardHeader>
       </Card>
@@ -139,11 +184,7 @@ export function CreatorOnboardingPage() {
 
       <Card style={{ marginBottom: 'var(--sp-4)' }}>
         <CardContent style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-3)' }}>
-          {hasSupportLink ? (
-            <Button variant="primary" onClick={openSupportLink} style={{ width: '100%' }}>
-              Подать заявку
-            </Button>
-          ) : (
+          {application?.status === 'pending' && (
             <>
               <div
                 style={{
@@ -154,11 +195,83 @@ export function CreatorOnboardingPage() {
                   color: 'var(--muted-fg)',
                 }}
               >
-                Укажи VITE_SUPPORT_TG_LINK в .env (например https://t.me/your_support)
+                Заявка на рассмотрении. Мы свяжемся с вами после проверки.
               </div>
-              <Button variant="secondary" onClick={handleCopyApplication} style={{ width: '100%' }}>
-                Скопировать @username для саппорта
+              <Button
+                variant="secondary"
+                onClick={() => refetch()}
+                disabled={isSubmitting}
+                style={{ width: '100%' }}
+              >
+                Обновить статус
               </Button>
+            </>
+          )}
+          {application?.status === 'rejected' && (
+            <>
+              {application.adminNote && (
+                <div
+                  style={{
+                    padding: 'var(--sp-3)',
+                    background: 'var(--surface)',
+                    borderRadius: 'var(--r-md)',
+                    fontSize: 'var(--text-sm)',
+                    color: 'var(--muted-fg)',
+                  }}
+                >
+                  Причина: {application.adminNote}
+                </div>
+              )}
+              <Button
+                variant="primary"
+                onClick={handleSubmitApplication}
+                disabled={isSubmitting}
+                style={{ width: '100%' }}
+              >
+                Подать снова
+              </Button>
+            </>
+          )}
+          {application?.status === 'approved' && (
+            <div
+              style={{
+                padding: 'var(--sp-3)',
+                background: 'var(--surface)',
+                borderRadius: 'var(--r-md)',
+                fontSize: 'var(--text-sm)',
+                color: 'var(--muted-fg)',
+              }}
+            >
+              Одобрено. Ожидайте активации (вручную после одобрения).
+            </div>
+          )}
+          {!application && (
+            <>
+              <Button
+                variant="primary"
+                onClick={handleSubmitApplication}
+                disabled={isSubmitting}
+                style={{ width: '100%' }}
+              >
+                Подать заявку
+              </Button>
+              {hasSupportLink ? (
+                <Button variant="secondary" onClick={openSupportLink} style={{ width: '100%' }}>
+                  Написать в поддержку
+                </Button>
+              ) : (
+                <div
+                  style={{
+                    padding: 'var(--sp-3)',
+                    background: 'var(--surface)',
+                    borderRadius: 'var(--r-md)',
+                    fontSize: 'var(--text-sm)',
+                    color: 'var(--muted-fg)',
+                  }}
+                >
+                  Укажи VITE_SUPPORT_TG_LINK в .env (например https://t.me/your_support)
+                </div>
+              )}
             </>
           )}
           {hasSupportLink && (

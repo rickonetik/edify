@@ -16,6 +16,7 @@ const MIGRATION_LIST = [
   '004_add_experts_and_members',
   '005_add_audit_log_read_indexes',
   '006_add_expert_subscriptions',
+  '007_add_expert_applications',
 ] as const;
 
 export async function runMigrations(pool: Pool): Promise<void> {
