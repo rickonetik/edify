@@ -2,6 +2,7 @@ import React from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Button, Card, Skeleton, EmptyState, ErrorState } from '../shared/ui/index.js';
 import { useMe } from '../shared/queries/useMe.js';
+import { getTelegramDisplayUser } from '../shared/auth/telegram.js';
 
 // Mock data
 const mockCurrentCourse = {
@@ -608,8 +609,9 @@ export function LearnPage() {
   const [searchParams] = useSearchParams();
   const state = searchParams.get('state') || 'default';
   const { data: meData } = useMe();
-  const user = meData?.user ?? null;
-  const userName = displayName(user);
+  const apiUser = meData?.user ?? null;
+  const displayUser = apiUser ?? getTelegramDisplayUser();
+  const userName = displayName(displayUser);
 
   if (state === 'loading') {
     return <LoadingState />;

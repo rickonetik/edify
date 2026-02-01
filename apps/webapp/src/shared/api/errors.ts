@@ -48,6 +48,25 @@ export function isApiClientError(error: unknown): error is ApiClientError {
 }
 
 /**
+ * Extract HTTP status from an error (Story 5.4).
+ * Handles ApiClientError.status, response?.status, cause?.status, and generic .status.
+ */
+export function getHttpStatus(err: unknown): number | null {
+  if (err == null) return null;
+  if (isApiClientError(err)) return err.status;
+  if (typeof err === 'object') {
+    const o = err as Record<string, unknown>;
+    if (typeof o.status === 'number') return o.status;
+    const res = o.response as Record<string, unknown> | undefined;
+    if (res && typeof res.status === 'number') return res.status;
+    const data = o.data as Record<string, unknown> | undefined;
+    if (data && typeof data.status === 'number') return data.status;
+    if (o.cause != null) return getHttpStatus(o.cause);
+  }
+  return null;
+}
+
+/**
  * Map HTTP status code to error code
  * Uses existing error codes from @tracked/shared
  */

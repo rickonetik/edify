@@ -9,6 +9,11 @@
 export const me = () => ['me'] as const;
 
 /**
+ * Query key for /me/expert-subscription (Story 5.4; API in 5.5)
+ */
+export const meExpertSubscription = () => ['me', 'expert-subscription'] as const;
+
+/**
  * Query key for /library endpoint
  */
 export const library = (params?: { limit?: number; offset?: number }) => {

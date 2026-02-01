@@ -10,7 +10,13 @@ import {
   useToast,
 } from '../shared/ui/index.js';
 import { useMe } from '../shared/queries/useMe.js';
+import { useMyExpertSubscription } from '../shared/queries/useMyExpertSubscription.js';
+import { deriveExpertCtaState } from '../features/account/expertCtaState.js';
+import { BecomeExpertCard } from '../features/account/BecomeExpertCard.js';
+import { getTelegramDisplayUser, type TelegramDisplayUser } from '../shared/auth/telegram.js';
 import type { ContractsV1 } from '@tracked/shared';
+
+type DisplayUser = ContractsV1.UserV1 | TelegramDisplayUser | null;
 
 const mockReferralCode = 'KOL-9F2A';
 
@@ -86,7 +92,7 @@ function AvatarPlaceholderCircle({ size }: { size: number }) {
 const loadedAvatarUrls = new Set<string>();
 
 // Avatar: image from URL (with placeholder until loaded) or placeholder only
-function UserAvatar({ user }: { user: ContractsV1.UserV1 | null }) {
+function UserAvatar({ user }: { user: DisplayUser }) {
   const src = user?.avatarUrl ?? null;
   const size = 64;
   const alreadyLoaded = src ? loadedAvatarUrls.has(src) : false;
@@ -129,7 +135,7 @@ function UserAvatar({ user }: { user: ContractsV1.UserV1 | null }) {
   );
 }
 
-function displayName(user: ContractsV1.UserV1 | null): string {
+function displayName(user: DisplayUser): string {
   if (!user) return 'Пользователь';
   const first = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
   if (first) return first;
@@ -137,10 +143,51 @@ function displayName(user: ContractsV1.UserV1 | null): string {
   return 'Пользователь';
 }
 
+// Copy icon (icon-only, no lucide dependency)
+function CopyIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  );
+}
+
 // Profile Card Component
-function ProfileCard({ user }: { user: ContractsV1.UserV1 | null }) {
+// isPro: show "Pro" badge only when expert (expired/active), not for student (none).
+// tgId: only when in Telegram (initDataUnsafe.user.id) — show number + icon-only copy; in browser show nothing.
+function ProfileCard({
+  user,
+  isPro,
+  tgId,
+}: {
+  user: DisplayUser;
+  isPro: boolean;
+  tgId: string | null;
+}) {
   const name = displayName(user);
   const handle = user?.username ? `@${user.username}` : '';
+  const toast = useToast();
+
+  const handleCopyTgId = React.useCallback(async () => {
+    if (!tgId) return;
+    const ok = await copyToClipboard(tgId);
+    if (ok && window.Telegram?.WebApp?.showPopup) {
+      window.Telegram.WebApp.showPopup({ title: 'Скопировано', message: 'TG ID скопирован.' });
+    } else if (ok && toast?.show) {
+      toast.show({ title: 'Скопировано', variant: 'success' });
+    }
+  }, [tgId, toast]);
 
   return (
     <Card style={{ padding: 'var(--sp-4)', marginBottom: 'var(--sp-4)' }}>
@@ -168,25 +215,52 @@ function ProfileCard({ user }: { user: ContractsV1.UserV1 | null }) {
               style={{
                 fontSize: 'var(--text-sm)',
                 color: 'var(--muted-fg)',
-                marginBottom: 'var(--sp-2)',
+                marginBottom: tgId ? 'var(--sp-1)' : 'var(--sp-2)',
               }}
             >
               {handle}
             </div>
           )}
-          <div
-            style={{
-              display: 'inline-block',
-              padding: 'var(--sp-1) var(--sp-2)',
-              backgroundColor: 'var(--accent)',
-              borderRadius: 'var(--r-sm)',
-              fontSize: 'var(--text-xs)',
-              color: 'var(--bg)',
-              fontWeight: 'var(--font-weight-medium)',
-            }}
-          >
-            Pro
-          </div>
+          {tgId && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--sp-2)',
+                marginBottom: 'var(--sp-2)',
+              }}
+            >
+              <span style={{ fontSize: 'var(--text-sm)', color: 'var(--muted-fg)' }}>{tgId}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCopyTgId}
+                aria-label="Copy ID"
+                style={{
+                  padding: 'var(--sp-1)',
+                  minWidth: 32,
+                  minHeight: 32,
+                }}
+              >
+                <CopyIcon size={16} />
+              </Button>
+            </div>
+          )}
+          {isPro && (
+            <div
+              style={{
+                display: 'inline-block',
+                padding: 'var(--sp-1) var(--sp-2)',
+                backgroundColor: 'var(--accent)',
+                borderRadius: 'var(--r-sm)',
+                fontSize: 'var(--text-xs)',
+                color: 'var(--bg)',
+                fontWeight: 'var(--font-weight-medium)',
+              }}
+            >
+              Pro
+            </div>
+          )}
         </div>
       </div>
     </Card>
@@ -371,19 +445,13 @@ function StatsRow() {
   );
 }
 
-// Actions List Component
+// Actions List Component (expert CTA is in BecomeExpertCard)
 function ActionsList() {
   const navigate = useNavigate();
   const toast = useToast();
 
   return (
     <div>
-      <ListItem
-        title="Стать экспертом"
-        subtitle="Создавайте курсы и зарабатывайте"
-        right="›"
-        onClick={() => navigate('/creator/onboarding')}
-      />
       <ListItem
         title="Поддержка"
         subtitle="Помощь и обратная связь"
@@ -404,6 +472,44 @@ function ActionsList() {
       />
     </div>
   );
+}
+
+// DEV-only: force expert CTA state from ?expertCta=none|expired|active (browser test without MSW)
+function getForcedExpertCtaState(
+  searchParams: URLSearchParams,
+): 'none' | 'expired' | 'active' | null {
+  if (!import.meta.env.DEV) return null;
+  const p = searchParams.get('expertCta');
+  if (p === 'none' || p === 'expired' || p === 'active') return p;
+  return null;
+}
+
+// Expert CTA block: subscription state → NONE / EXPIRED / ACTIVE (Story 5.4)
+// Best-effort: any error → NONE (student). Card always visible, CTA always clickable.
+function ExpertCtaBlock() {
+  const [searchParams] = useSearchParams();
+  const expertCtaParam = searchParams.get('expertCta') as 'none' | 'expired' | 'active' | null;
+  const expertCta =
+    expertCtaParam && ['none', 'expired', 'active'].includes(expertCtaParam)
+      ? expertCtaParam
+      : undefined;
+
+  const forcedState = getForcedExpertCtaState(searchParams);
+  const { data, isLoading } = useMyExpertSubscription({ expertCta });
+  const subscription = data ?? null;
+  const state = forcedState ?? deriveExpertCtaState(subscription);
+
+  if (isLoading && forcedState == null) {
+    return (
+      <Card style={{ marginBottom: 'var(--sp-4)', padding: 'var(--sp-4)' }}>
+        <Skeleton width="40%" height="20px" style={{ marginBottom: 'var(--sp-2)' }} />
+        <Skeleton width="100%" height="16px" style={{ marginBottom: 'var(--sp-3)' }} />
+        <Skeleton width="100%" height="40px" radius="md" />
+      </Card>
+    );
+  }
+
+  return <BecomeExpertCard state={state} subscription={subscription} />;
 }
 
 // Loading State
@@ -431,7 +537,17 @@ export function AccountPage() {
   const navigate = useNavigate();
   const state = searchParams.get('state') || 'default';
   const { data: meData } = useMe();
-  const user = meData?.user ?? null;
+  const expertCtaParam = searchParams.get('expertCta') as 'none' | 'expired' | 'active' | null;
+  const expertCta =
+    expertCtaParam && ['none', 'expired', 'active'].includes(expertCtaParam)
+      ? expertCtaParam
+      : undefined;
+  const { data: subData } = useMyExpertSubscription({ expertCta });
+
+  const user: DisplayUser = meData?.user ?? getTelegramDisplayUser() ?? null;
+  const forcedState = getForcedExpertCtaState(searchParams);
+  const expertState = forcedState ?? deriveExpertCtaState(subData ?? null);
+  const tgId = getTelegramDisplayUser()?.telegramId ?? null;
 
   // Loading state
   if (state === 'loading') {
@@ -473,7 +589,9 @@ export function AccountPage() {
   // Default state
   return (
     <div style={{ padding: 'var(--sp-4)' }}>
-      <ProfileCard user={user} />
+      <ProfileCard user={user} isPro={expertState !== 'none'} tgId={tgId} />
+
+      <ExpertCtaBlock />
 
       {/* Referral Card */}
       <ReferralCard />

@@ -73,10 +73,16 @@ TELEGRAM_WEBAPP_URL=https://xxxx.ngrok-free.app
    pnpm run:protocol -- pkill ngrok
    ```
 
-2. **Start WebApp tunnel** (long-running):
+2. **Start WebApp tunnel** (long-running). Use **127.0.0.1:5173** to avoid ERR_NGROK_8012 (webapp listens on 5173, strictPort in Vite):
 
    ```bash
-   pnpm run:protocol --timeout-ms=600000 -- ngrok http 5173
+   curl -I http://127.0.0.1:5173/
+   ```
+
+   Expect 200/304. Then:
+
+   ```bash
+   pnpm run:protocol --timeout-ms=600000 -- ngrok http 127.0.0.1:5173
    ```
 
    Copy the **https** URL (it changes on free tier).

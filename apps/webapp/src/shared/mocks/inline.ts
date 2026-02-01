@@ -6,6 +6,8 @@ import {
   getMockLessons,
   getMockLesson,
   paginate,
+  mockExpertSubscriptionActive,
+  mockExpertSubscriptionExpired,
 } from './fixtures.js';
 
 /**
@@ -39,8 +41,33 @@ export function tryHandleMockRequest(req: MockRequest): MockResponse | null {
   }
 
   // Parse path
-  const pathParts = path.split('?')[0].split('/').filter(Boolean);
   const apiPrefix = '/api';
+
+  // GET /me/expert-subscription (Story 5.4) — path may be with or without /api
+  if (path === '/me/expert-subscription' || path.startsWith('/me/expert-subscription?')) {
+    const state = query.expertCta ?? 'none';
+    if (state === 'none') {
+      return {
+        status: 404,
+        json: {
+          error: {
+            code: 'NOT_FOUND',
+            message: 'No expert subscription',
+            requestId: `req-${Date.now()}`,
+          },
+        },
+        headers: { 'content-type': 'application/json' },
+      };
+    }
+    const subscription =
+      state === 'expired' ? mockExpertSubscriptionExpired : mockExpertSubscriptionActive;
+    return {
+      status: 200,
+      json: subscription,
+      headers: { 'content-type': 'application/json' },
+    };
+  }
+
   if (!path.startsWith(apiPrefix)) {
     return null;
   }

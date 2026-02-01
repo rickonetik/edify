@@ -3,5 +3,9 @@
  */
 
 export { getAccessToken, setAccessToken, clearAccessToken } from './tokenStorage.js';
-export { getTelegramInitData } from './telegram.js';
+export {
+  getTelegramInitData,
+  getTelegramDisplayUser,
+  type TelegramDisplayUser,
+} from './telegram.js';
 export { bootstrapAuth, type BootstrapAuthResult } from './bootstrapAuth.js';

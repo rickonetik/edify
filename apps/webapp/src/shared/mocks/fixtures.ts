@@ -7,6 +7,28 @@ import { ContractsV1 } from '@tracked/shared';
 
 const now = new Date().toISOString();
 const pastDate = new Date(Date.now() - 86400000 * 7).toISOString(); // 7 days ago
+const futureDate = new Date(Date.now() + 86400000 * 30).toISOString(); // 30 days from now
+
+/**
+ * Mock expert subscription fixtures (Story 5.4)
+ */
+export const mockExpertSubscriptionActive: ContractsV1.ExpertSubscriptionV1 = {
+  expertId: '00000000-0000-0000-0000-000000000001',
+  plan: 'free_stub',
+  status: 'active',
+  currentPeriodStart: now,
+  currentPeriodEnd: futureDate,
+  priceCents: 0,
+};
+
+export const mockExpertSubscriptionExpired: ContractsV1.ExpertSubscriptionV1 = {
+  expertId: '00000000-0000-0000-0000-000000000001',
+  plan: 'free_stub',
+  status: 'expired',
+  currentPeriodStart: pastDate,
+  currentPeriodEnd: pastDate,
+  priceCents: 0,
+};
 
 /**
  * Mock user fixture

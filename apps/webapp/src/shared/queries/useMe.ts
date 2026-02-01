@@ -1,12 +1,13 @@
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { ContractsV1 } from '@tracked/shared';
 import { fetchJson, ApiClientError } from '../api/index.js';
+import { getUser } from '../auth/userStorage.js';
 import { me } from './queryKeys.js';
 
 /**
  * Hook to fetch current user
  * GET /me
- * Data is cached and not refetched on every mount so Profile stays instant when navigating back.
+ * Uses user from sessionStorage (saved after POST /auth/telegram) as initialData so name/avatar show immediately in Mini App.
  */
 export function useMe() {
   return useQuery<ContractsV1.GetMeResponseV1, Error>({
@@ -16,6 +17,10 @@ export function useMe() {
         path: '/me',
         signal,
       });
+    },
+    initialData: () => {
+      const user = getUser();
+      return user ? { user } : undefined;
     },
     retry: (failureCount, error) => {
       // Don't retry on 401 (unauthorized)

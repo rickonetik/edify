@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
@@ -8,6 +9,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [react()],
   server: {
     port: 5173,
+    strictPort: true,
     host: true,
     ...(mode === 'development' ? { allowedHosts: DEV_ALLOWED_HOSTS } : {}),
     // Proxy API to avoid mixed content (HTTPS page → HTTP API) when opening via ngrok
@@ -17,6 +19,8 @@ export default defineConfig(({ mode }) => ({
             '/auth': { target: 'http://localhost:3001', changeOrigin: true },
             '/me': { target: 'http://localhost:3001', changeOrigin: true },
             '/health': { target: 'http://localhost:3001', changeOrigin: true },
+            '/admin': { target: 'http://localhost:3001', changeOrigin: true },
+            '/experts': { target: 'http://localhost:3001', changeOrigin: true },
           }
         : undefined,
   },
@@ -34,5 +38,10 @@ export default defineConfig(({ mode }) => ({
     commonjsOptions: {
       include: [/shared/, /node_modules/],
     },
+  },
+  test: {
+    environment: 'node',
+    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+    globals: true,
   },
 }));
