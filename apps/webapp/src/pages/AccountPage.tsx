@@ -144,9 +144,30 @@ function displayName(user: DisplayUser): string {
 }
 
 // Profile Card Component
-function ProfileCard({ user }: { user: DisplayUser }) {
+// isPro: show "Pro" badge only when expert (expired/active), not for student (none).
+// tgId: show "TG ID: ..." + Copy only when in Telegram (initDataUnsafe.user.id).
+function ProfileCard({
+  user,
+  isPro,
+  tgId,
+}: {
+  user: DisplayUser;
+  isPro: boolean;
+  tgId: string | null;
+}) {
   const name = displayName(user);
   const handle = user?.username ? `@${user.username}` : '';
+  const toast = useToast();
+
+  const handleCopyTgId = React.useCallback(async () => {
+    if (!tgId) return;
+    const ok = await copyToClipboard(tgId);
+    if (ok && window.Telegram?.WebApp?.showPopup) {
+      window.Telegram.WebApp.showPopup({ title: 'Скопировано', message: 'TG ID скопирован.' });
+    } else if (ok && toast?.show) {
+      toast.show({ title: 'Скопировано', variant: 'success' });
+    }
+  }, [tgId, toast]);
 
   return (
     <Card style={{ padding: 'var(--sp-4)', marginBottom: 'var(--sp-4)' }}>
@@ -174,25 +195,44 @@ function ProfileCard({ user }: { user: DisplayUser }) {
               style={{
                 fontSize: 'var(--text-sm)',
                 color: 'var(--muted-fg)',
-                marginBottom: 'var(--sp-2)',
+                marginBottom: tgId ? 'var(--sp-1)' : 'var(--sp-2)',
               }}
             >
               {handle}
             </div>
           )}
-          <div
-            style={{
-              display: 'inline-block',
-              padding: 'var(--sp-1) var(--sp-2)',
-              backgroundColor: 'var(--accent)',
-              borderRadius: 'var(--r-sm)',
-              fontSize: 'var(--text-xs)',
-              color: 'var(--bg)',
-              fontWeight: 'var(--font-weight-medium)',
-            }}
-          >
-            Pro
-          </div>
+          {tgId && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--sp-2)',
+                marginBottom: 'var(--sp-2)',
+              }}
+            >
+              <span style={{ fontSize: 'var(--text-sm)', color: 'var(--muted-fg)' }}>
+                TG ID: {tgId}
+              </span>
+              <Button variant="secondary" size="sm" onClick={handleCopyTgId}>
+                Скопировать
+              </Button>
+            </div>
+          )}
+          {isPro && (
+            <div
+              style={{
+                display: 'inline-block',
+                padding: 'var(--sp-1) var(--sp-2)',
+                backgroundColor: 'var(--accent)',
+                borderRadius: 'var(--r-sm)',
+                fontSize: 'var(--text-xs)',
+                color: 'var(--bg)',
+                fontWeight: 'var(--font-weight-medium)',
+              }}
+            >
+              Pro
+            </div>
+          )}
         </div>
       </div>
     </Card>
@@ -469,7 +509,17 @@ export function AccountPage() {
   const navigate = useNavigate();
   const state = searchParams.get('state') || 'default';
   const { data: meData } = useMe();
+  const expertCtaParam = searchParams.get('expertCta') as 'none' | 'expired' | 'active' | null;
+  const expertCta =
+    expertCtaParam && ['none', 'expired', 'active'].includes(expertCtaParam)
+      ? expertCtaParam
+      : undefined;
+  const { data: subData } = useMyExpertSubscription({ expertCta });
+
   const user: DisplayUser = meData?.user ?? getTelegramDisplayUser() ?? null;
+  const forcedState = getForcedExpertCtaState(searchParams);
+  const expertState = forcedState ?? deriveExpertCtaState(subData ?? null);
+  const tgId = getTelegramDisplayUser()?.telegramId ?? null;
 
   // Loading state
   if (state === 'loading') {
@@ -511,7 +561,7 @@ export function AccountPage() {
   // Default state
   return (
     <div style={{ padding: 'var(--sp-4)' }}>
-      <ProfileCard user={user} />
+      <ProfileCard user={user} isPro={expertState !== 'none'} tgId={tgId} />
 
       <ExpertCtaBlock />
 

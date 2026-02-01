@@ -10,6 +10,8 @@ export interface TelegramDisplayUser {
   lastName?: string;
   username?: string;
   avatarUrl?: string | null;
+  /** Telegram user id (only when opened in Telegram). For display + copy in Account. */
+  telegramId?: string;
 }
 
 /**
@@ -19,6 +21,7 @@ interface TelegramWebApp {
   initData?: string;
   initDataUnsafe?: {
     user?: {
+      id?: number;
       first_name?: string;
       last_name?: string;
       username?: string;
@@ -142,6 +145,7 @@ export function getTelegramDisplayUser(): TelegramDisplayUser | null {
       lastName: u.last_name,
       username: u.username,
       avatarUrl: u.photo_url ?? null,
+      telegramId: u.id != null ? String(u.id) : undefined,
     };
   } catch {
     return null;
