@@ -76,7 +76,7 @@ pnpm --filter @tracked/webapp test
 - **TG ID + copy icon** — строка с числом ID и иконкой копирования (icon-only, без текста «Copy»).
 - **CTA-блок** — либо «Стать экспертом» (student), либо «Вы эксперт» / активная подписка — оба варианта ок.
 
-_(Вставить скрин: `assets/` или в PR описание.)_
+![Mini App — Account](docs/assets/story-5.4/mini-account.png)
 
 ### 4.2. Браузер — Account и Onboarding
 
@@ -87,7 +87,13 @@ _(Вставить скрин: `assets/` или в PR описание.)_
 | ACTIVE     | `/account?expertCta=active`          | Бейдж Pro есть; CTA «Вы эксперт» / активная подписка.            |
 | Onboarding | `/creator/onboarding?expertCta=none` | Страница «Стать экспертом» (onboarding), без Pro.                |
 
-_(Вставить скрины в PR или в `assets/`; если уже делал раньше — достаточно проверить, что `/account?expertCta=none` без Pro.)_
+![Account — none](docs/assets/story-5.4/browser-none.png)
+
+![Account — expired](docs/assets/story-5.4/browser-expired.png)
+
+![Account — active](docs/assets/story-5.4/browser-active.png)
+
+![Onboarding — none](docs/assets/story-5.4/browser-onboarding-none.png)
 
 **UX (5.4):** TG ID — только число + icon-only Copy (variant=ghost, aria-label="Copy ID"); только в Telegram. Бейдж «Pro» только при `state !== 'none'`; в одной строке с ником справа (fix 5.4).
 
