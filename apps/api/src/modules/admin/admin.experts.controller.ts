@@ -21,6 +21,7 @@ import { PlatformRoleGuard } from '../../auth/rbac/platform-role.guard.js';
 import { RequirePlatformRole } from '../../auth/rbac/require-platform-role.decorator.js';
 import { ExpertsRepository } from '../../experts/experts.repository.js';
 import { ExpertMembersRepository } from '../../experts/expert-members.repository.js';
+import { ExpertSubscriptionsRepository } from '../../subscriptions/expert-subscriptions.repository.js';
 import { UsersRepository } from '../../users/users.repository.js';
 import { AuditService } from '../../audit/audit.service.js';
 import type { FastifyRequest } from 'fastify';
@@ -38,6 +39,7 @@ export class AdminExpertsController {
   constructor(
     private readonly expertsRepository: ExpertsRepository,
     private readonly expertMembersRepository: ExpertMembersRepository,
+    private readonly expertSubscriptionsRepository: ExpertSubscriptionsRepository,
     private readonly usersRepository: UsersRepository,
     private readonly auditService: AuditService,
   ) {}
@@ -98,6 +100,8 @@ export class AdminExpertsController {
       slug: slug && typeof slug === 'string' ? slug.trim() || null : null,
       createdByUserId: ownerUserId,
     });
+
+    await this.expertSubscriptionsRepository.ensureDefault(expertId);
 
     await this.auditService.write({
       actorUserId: req.user?.userId ?? null,
