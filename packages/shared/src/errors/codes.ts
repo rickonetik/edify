@@ -16,6 +16,8 @@ export const ErrorCodes = {
   FORBIDDEN_EXPERT_ROLE: 'FORBIDDEN_EXPERT_ROLE',
   EXPERT_MEMBERSHIP_REQUIRED: 'EXPERT_MEMBERSHIP_REQUIRED',
   EXPERT_CONTEXT_REQUIRED: 'EXPERT_CONTEXT_REQUIRED',
+  // Expert gating by subscription (Story 5.3)
+  EXPERT_SUBSCRIPTION_INACTIVE: 'EXPERT_SUBSCRIPTION_INACTIVE',
 } as const;
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
