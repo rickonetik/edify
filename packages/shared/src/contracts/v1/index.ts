@@ -13,6 +13,11 @@ export type { UserV1 } from './user.js';
 export type { PlatformRoleV1 } from './platform-role.js';
 export type { ExpertV1 } from './expert.js';
 export type { ExpertMemberV1, ExpertMemberRoleV1 } from './expert-member.js';
+export type {
+  ExpertSubscriptionV1,
+  ExpertSubscriptionPlanV1,
+  ExpertSubscriptionStatusV1,
+} from './subscription.js';
 export type { CourseV1 } from './course.js';
 export type { LessonV1, LessonVideoV1 } from './lesson.js';
 export type { InviteV1 } from './invite.js';
@@ -43,6 +48,9 @@ export {
   ExpertV1Schema,
   ExpertMemberV1Schema,
   ExpertMemberRoleV1Schema,
+  ExpertSubscriptionPlanV1Schema,
+  ExpertSubscriptionStatusV1Schema,
+  ExpertSubscriptionV1Schema,
   CourseV1Schema,
   LessonV1Schema,
   InviteV1Schema,

@@ -8,6 +8,11 @@ export { UserV1Schema } from './user.js';
 export { PlatformRoleV1Schema } from './platform-role.js';
 export { ExpertV1Schema } from './expert.js';
 export { ExpertMemberV1Schema, ExpertMemberRoleV1Schema } from './expert-member.js';
+export {
+  ExpertSubscriptionPlanV1Schema,
+  ExpertSubscriptionStatusV1Schema,
+  ExpertSubscriptionV1Schema,
+} from './subscription.js';
 export { CourseV1Schema } from './course.js';
 export { LessonV1Schema } from './lesson.js';
 export { InviteV1Schema } from './invite.js';
