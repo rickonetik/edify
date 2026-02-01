@@ -31,6 +31,35 @@ export const mockExpertSubscriptionExpired: ContractsV1.ExpertSubscriptionV1 = {
 };
 
 /**
+ * Mock expert application fixtures (Story 5.6)
+ * expertApp=none → application: null; expertApp=pending|rejected|approved → application with that status
+ */
+function mockExpertApplication(
+  status: 'pending' | 'rejected' | 'approved',
+): ContractsV1.ExpertApplicationV1 {
+  return {
+    id: '00000000-0000-0000-0000-000000000010',
+    userId: '00000000-0000-0000-0000-000000000002',
+    status,
+    note: status === 'rejected' ? 'Previous note' : null,
+    adminNote: status === 'rejected' ? 'Not enough experience' : null,
+    createdAt: now,
+    updatedAt: now,
+    decidedAt: status !== 'pending' ? now : null,
+    decidedByUserId: status !== 'pending' ? '00000000-0000-0000-0000-000000000003' : null,
+  };
+}
+
+export function getMockExpertApplicationResponse(
+  expertApp: 'none' | 'pending' | 'rejected' | 'approved',
+): ContractsV1.MeExpertApplicationResponseV1 {
+  if (expertApp === 'none') {
+    return { application: null };
+  }
+  return { application: mockExpertApplication(expertApp) };
+}
+
+/**
  * Mock user fixture
  */
 export const mockUser: ContractsV1.UserV1 = {

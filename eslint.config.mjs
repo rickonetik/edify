@@ -62,6 +62,18 @@ export default [
     },
   },
 
+  // Node scripts (tools/scripts) — allow console/process etc.
+  {
+    files: ['tools/scripts/**/*.mjs'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
+
   // Prettier compatibility
   eslintConfigPrettier,
 ];

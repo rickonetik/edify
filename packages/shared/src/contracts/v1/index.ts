@@ -22,6 +22,8 @@ export type { CourseV1 } from './course.js';
 export type { LessonV1, LessonVideoV1 } from './lesson.js';
 export type { InviteV1 } from './invite.js';
 export type { SubmissionV1 } from './submission.js';
+export type { ExpertApplicationV1, ExpertApplicationStatusV1 } from './expert-application.js';
+export type { MeExpertApplicationResponseV1 } from './me-expert-application.js';
 
 // Error types
 export type { ApiErrorV1, ApiErrorResponseV1 } from './errors.js';
@@ -66,4 +68,7 @@ export {
   AuthTelegramResponseV1Schema,
   AuditLogEntryV1Schema,
   AuditLogListResponseV1Schema,
+  ExpertApplicationStatusV1Schema,
+  ExpertApplicationV1Schema,
+  MeExpertApplicationResponseV1Schema,
 } from './schemas.js';

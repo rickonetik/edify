@@ -1,4 +1,4 @@
-import { http, HttpResponse } from 'msw';
+import { http, HttpResponse, passthrough } from 'msw';
 import { ContractsV1 } from '@tracked/shared';
 import {
   mockUser,
@@ -9,6 +9,7 @@ import {
   paginate,
   mockExpertSubscriptionActive,
   mockExpertSubscriptionExpired,
+  getMockExpertApplicationResponse,
 } from './fixtures.js';
 
 /**
@@ -228,5 +229,87 @@ export const handlers = [
     }
 
     return HttpResponse.json(mockExpertSubscriptionActive);
+  }),
+
+  /**
+   * GET /me/expert-application — Story 5.6
+   * Query ?expertApp=none|pending|rejected|approved for dev UX; else passthrough to real API.
+   */
+  http.get('/me/expert-application', ({ request }) => {
+    const url = new URL(request.url);
+    const expertApp = url.searchParams.get('expertApp');
+    if (
+      expertApp !== 'none' &&
+      expertApp !== 'pending' &&
+      expertApp !== 'rejected' &&
+      expertApp !== 'approved'
+    ) {
+      return passthrough();
+    }
+    const response = getMockExpertApplicationResponse(
+      expertApp as 'none' | 'pending' | 'rejected' | 'approved',
+    );
+    return HttpResponse.json(response);
+  }),
+
+  /**
+   * GET /api/me/expert-application — same, for apps that use /api prefix
+   */
+  http.get('/api/me/expert-application', ({ request }) => {
+    const url = new URL(request.url);
+    const expertApp = url.searchParams.get('expertApp');
+    if (
+      expertApp !== 'none' &&
+      expertApp !== 'pending' &&
+      expertApp !== 'rejected' &&
+      expertApp !== 'approved'
+    ) {
+      return passthrough();
+    }
+    const response = getMockExpertApplicationResponse(
+      expertApp as 'none' | 'pending' | 'rejected' | 'approved',
+    );
+    return HttpResponse.json(response);
+  }),
+
+  /**
+   * POST /me/expert-application — Story 5.6
+   * Query ?expertApp=... for dev mock; else passthrough to real API.
+   */
+  http.post('/me/expert-application', ({ request }) => {
+    const url = new URL(request.url);
+    const expertApp = url.searchParams.get('expertApp');
+    if (
+      expertApp !== 'none' &&
+      expertApp !== 'pending' &&
+      expertApp !== 'rejected' &&
+      expertApp !== 'approved'
+    ) {
+      return passthrough();
+    }
+    const response = getMockExpertApplicationResponse(
+      expertApp === 'none' ? 'pending' : (expertApp as 'pending' | 'rejected' | 'approved'),
+    );
+    return HttpResponse.json(response);
+  }),
+
+  /**
+   * POST /api/me/expert-application — same
+   */
+  http.post('/api/me/expert-application', ({ request }) => {
+    const url = new URL(request.url);
+    const expertApp = url.searchParams.get('expertApp');
+    if (
+      expertApp !== 'none' &&
+      expertApp !== 'pending' &&
+      expertApp !== 'rejected' &&
+      expertApp !== 'approved'
+    ) {
+      return passthrough();
+    }
+    const response = getMockExpertApplicationResponse(
+      expertApp === 'none' ? 'pending' : (expertApp as 'pending' | 'rejected' | 'approved'),
+    );
+    return HttpResponse.json(response);
   }),
 ];
