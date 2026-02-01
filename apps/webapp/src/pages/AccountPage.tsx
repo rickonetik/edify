@@ -143,9 +143,29 @@ function displayName(user: DisplayUser): string {
   return 'Пользователь';
 }
 
+// Copy icon (icon-only, no lucide dependency)
+function CopyIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  );
+}
+
 // Profile Card Component
 // isPro: show "Pro" badge only when expert (expired/active), not for student (none).
-// tgId: show "TG ID: ..." + Copy only when in Telegram (initDataUnsafe.user.id).
+// tgId: only when in Telegram (initDataUnsafe.user.id) — show number + icon-only copy; in browser show nothing.
 function ProfileCard({
   user,
   isPro,
@@ -210,11 +230,19 @@ function ProfileCard({
                 marginBottom: 'var(--sp-2)',
               }}
             >
-              <span style={{ fontSize: 'var(--text-sm)', color: 'var(--muted-fg)' }}>
-                TG ID: {tgId}
-              </span>
-              <Button variant="secondary" size="sm" onClick={handleCopyTgId}>
-                Скопировать
+              <span style={{ fontSize: 'var(--text-sm)', color: 'var(--muted-fg)' }}>{tgId}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCopyTgId}
+                aria-label="Copy ID"
+                style={{
+                  padding: 'var(--sp-1)',
+                  minWidth: 32,
+                  minHeight: 32,
+                }}
+              >
+                <CopyIcon size={16} />
               </Button>
             </div>
           )}

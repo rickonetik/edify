@@ -68,14 +68,15 @@ pnpm --filter @tracked/webapp test
 
 Снять из браузера (dev или Mini App). Без секретов, без абсолютных путей, без .env, без dist/\*\*.
 
-| Состояние  | URL                                  | Скрин                                                    |
-| ---------- | ------------------------------------ | -------------------------------------------------------- |
-| NONE       | `/account?expertCta=none`            | _(вставить скрин; бейджа Pro нет, TG ID в браузере нет)_ |
-| EXPIRED    | `/account?expertCta=expired`         | _(вставить скрин; бейдж Pro есть)_                       |
-| ACTIVE     | `/account?expertCta=active`          | _(вставить скрин; бейдж Pro есть)_                       |
-| Onboarding | `/creator/onboarding?expertCta=none` | _(вставить скрин)_                                       |
+| Состояние    | URL                                  | Скрин                                                                |
+| ------------ | ------------------------------------ | -------------------------------------------------------------------- |
+| NONE         | `/account?expertCta=none`            | _(обновить скрин: нет Pro, нет строки ID в браузере)_                |
+| EXPIRED      | `/account?expertCta=expired`         | _(вставить скрин; бейдж Pro есть, ID в браузере нет)_                |
+| ACTIVE       | `/account?expertCta=active`          | _(вставить скрин; бейдж Pro есть, ID в браузере нет)_                |
+| Onboarding   | `/creator/onboarding?expertCta=none` | _(вставить скрин)_                                                   |
+| **Telegram** | `/account` в Mini App                | _(вставить скрин: только число ID + иконка копирования, без текста)_ |
 
-**Доп. фикс (5.4):** TG ID под ником + кнопка «Скопировать» только в Telegram (есть `initDataUnsafe.user.id`). Бейдж «Pro» только при `state !== 'none'` (expired/active).
+**UX (5.4):** TG ID — только число + icon-only Copy (variant=ghost, aria-label="Copy ID"); показывается только в Telegram (`initDataUnsafe.user.id`). В браузере строку ID не показываем. Бейдж «Pro» только при `state !== 'none'`.
 
 ---
 
